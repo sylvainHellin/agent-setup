@@ -1,9 +1,9 @@
-# Blueprint of the setup for my AI assistant
+# AI assistant blueprint
 
-The harness used is [pi](https://github.com/earendil-works/pi-coding-agent), a minimal, extensible terminal coding agent, applied daily to code, scientific writing and admin work.
+The harness used is [pi](https://github.com/earendil-works/pi-coding-agent), a minimal, extensible terminal coding agent, applied daily to coding tasks, as well as scientific and administrative work.
 The skills and instruction files are plain Markdown and transfer to other harnesses, but the extensions are pi-specific.
 
-It is meant as an inspiration to adapt and make one's own, rather than a setup to copy exactly as it is.
+It is meant as an inspiration to adapt and customize, rather than a setup to copy exactly as it is.
 
 ## What is inside
 
