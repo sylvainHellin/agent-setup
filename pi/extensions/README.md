@@ -16,7 +16,7 @@ Then add the npm packages from [`../settings.example.json`](../settings.example.
 | `diff.ts` | `/diff` (`--staged`, `<commit>`) reviews the git working tree in a file list and diff viewer with inline comments. | `shared/diff-utils.ts`, `shared/notify.ts`; git; optional `$EDITOR`, tuicr |
 | `footer/` | One-row footer: model and thinking level, path and git state, session name, mode indicators, context and cost; other extensions add segments through a registry on `globalThis`. | |
 | `guardrails.ts` | Hard-blocks bare `pip install` and unrecoverable git operations (`reset --hard`, `clean -f`, `checkout --`, `restore`), asks before package installs and destructive commands (`rm -rf`, `rsync --delete`, `git push --force`, disk tools, ...), and blocks them in unattended runs. | `shared/quiet-ui.ts` |
-| `herdr-blocked-bridge.ts` | Marks the herdr pane as blocked while a guardrails prompt waits, so herdr notifies you. | `shared/herdr-bus.ts`; herdr with its pi integration installed |
+| `herdr-blocked-bridge.ts` | Marks the herdr pane as blocked while a guardrails prompt waits, so herdr sends a notification. | `shared/herdr-bus.ts`; herdr with its pi integration installed |
 | `hide-declarations.ts` | Leaves rarely used tools (`Agent`, `get_subagent_result`, `steer_subagent`, `smart_compact`, `prune`) out of every request while they stay callable; edit `HIDDEN` to taste. | a skill or message that names the hidden tools |
 | `notify.ts` | Desktop notification and terminal bell when a turn ends. | `shared/notify.ts`; optional terminal-notifier on macOS |
 | `orchestrator/` | `/orchestrator [off]` turns the session into a dispatcher that delegates reading, research and edits to subagents. | `@tintinweb/pi-subagents`; agent definitions in `../agents/`; `footer/` for the indicator |
@@ -25,7 +25,7 @@ Then add the npm packages from [`../settings.example.json`](../settings.example.
 | `prune/` | `/prune` copies the branch into a new, reduced session without an LLM summary; the `prune` tool does the same in place; completed turns lose their thinking in batches. | `smart-compact/src/prompts.ts` |
 | `python-repl/` | `python` tool backed by a persistent IPython kernel per session (polars, pandas, duckdb, matplotlib, ...), `/python-reset`. | uv |
 | `redraw.ts` | `/redraw` forces a full TUI repaint after a resize leaves stray characters. | |
-| `review.ts` | `/review` lists every file the agent edited in this session, from the session log, with diffs and inline comments you can send back. | `shared/diff-utils.ts`, `shared/tool-path.ts`; pbcopy, wl-copy, xclip or xsel for copying |
+| `review.ts` | `/review` lists every file the agent edited in this session, from the session log, with diffs and inline comments to send back. | `shared/diff-utils.ts`, `shared/tool-path.ts`; pbcopy, wl-copy, xclip or xsel for copying |
 | `safe-write.ts` | `write` refuses to overwrite an existing file and points the agent to `edit`. | `shared/tool-path.ts` |
 | `session-name-date.ts` | Prefixes every session name with today's date unless it already starts with one. | |
 | `smart-compact/` | Escalating reminders past a token boundary; the agent compacts itself with the `smart_compact` tool and its own handoff, saved under `.agents/handoff/`; `/smart-compact`, `/smart-boundary`. | `prune/src/estimate.ts`; vendored fork of dasomji/pi-smart-compact (MIT, `smart-compact/LICENSE`) |
@@ -49,7 +49,7 @@ Then add the npm packages from [`../settings.example.json`](../settings.example.
 ## Settings
 
 [`../settings.example.json`](../settings.example.json) is a starting point for `~/.pi/agent/settings.json`: the two npm packages (`pi-vim` for a vim editor mode, optional; `@tintinweb/pi-subagents` for the `Agent` tool), pi's native auto-compaction left on as the failsafe behind `smart-compact/`, `codemode` enabled, and a few interface defaults.
-Merge it into your own file rather than replacing it; provider and model settings stay yours.
+It merges into an existing settings file rather than replacing it; provider and model settings stay untouched.
 
 ## Typecheck and tests
 

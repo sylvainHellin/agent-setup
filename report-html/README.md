@@ -31,13 +31,13 @@ Both have a dark mode.
 Clone or copy this folder anywhere, for example `~/code/agent-setup/report-html`.
 Open `example.html` in a browser to see it work.
 
-Optionally put the helper on your `PATH`:
+Optionally put the helper on the `PATH`:
 
 ```bash
 ln -s ~/code/agent-setup/report-html/bin/report ~/.local/bin/report
 ```
 
-It finds the template through its own location; set `REPORT_HTML_DIR` when you move the script elsewhere.
+It finds the template through its own location; set `REPORT_HTML_DIR` when the script moves elsewhere.
 
 ## Make a page
 
@@ -61,7 +61,7 @@ By hand:
 
 Comments and answers are stored in the browser's localStorage under `data-doc-id`, so they survive a rename or a move of the file.
 Keep `<title>` short, since the top bar shows it.
-Leave the `<link>` and `<script>` lines as they are and add no `<style>` or `<script>` of your own.
+Leave the `<link>` and `<script>` lines as they are and add no extra `<style>` or `<script>`.
 Adding `defer` to the script tag brings back a flash of the system colour scheme on load.
 
 The page needs nothing else: no header, no outline markup, no wrapper divs, no ids.
@@ -98,7 +98,7 @@ The script reads each linked asset from its path, or from its own folder when th
 
 ## Use it from an agent
 
-Paste this into a skill or your `AGENTS.md`, with the path adjusted:
+This block goes into a skill or `AGENTS.md`, with the path adjusted:
 
 ```markdown
 ## HTML reports

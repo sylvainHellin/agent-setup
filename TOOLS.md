@@ -3,7 +3,7 @@
 The CLIs and apps behind this setup, grouped by origin.
 The skills in `pi/skills/` name the ones they call.
 
-## Built by me
+## Own tools
 
 | Tool | Command | What it does |
 |---|---|---|
@@ -11,16 +11,16 @@ The skills in `pi/skills/` name the ones they call.
 | [doc-cli](https://github.com/sylvainHellin/doc-cli) | `doc` | Turns documents into Markdown: Office files and born-digital PDFs parsed locally, scans routed to local or cloud OCR (`documents` skill). |
 | [zot](https://github.com/sylvainHellin/zot) | `zot` | Queries and maintains a Zotero library: hybrid semantic search, fulltext, BibTeX export, and adding or editing items (`knowledge` skill). |
 | [plane-cli](https://github.com/sylvainHellin/plane-cli) | `plane` | Reads and writes issues on a self-hosted Plane instance without `curl` and `jq` pipelines (`productivity` skill). |
-| [mailypoppins](https://github.com/sylvainHellin/mailypoppins) | `mp` | Mail client with a CLI, a terminal UI and a macOS app, where every draft is a Markdown file you and your agent edit together. |
+| [mailypoppins](https://github.com/sylvainHellin/mailypoppins) | `mp` | Mail client with a CLI, a terminal UI and a macOS app, where every draft is a Markdown file the user and the agent edit together. |
 | [tts-cli](https://github.com/sylvainHellin/tts-cli) | `tts` | Text to speech: a thin wrapper around the MiniMax API, with optional local CPU backends (Kokoro, StyleTTS2, Chatterbox). |
-| [textfold](https://github.com/sylvainHellin/textfold) | `textfold` | My fork of TextFold (chenxiachan/textfold), which folds any text from a one-screen map down to every word. |
+| [textfold](https://github.com/sylvainHellin/textfold) | `textfold` | Fork of TextFold (chenxiachan/textfold), which folds any text from a one-screen map down to every word. |
 | [agent-cli](https://github.com/sylvainHellin/agent-cli) | `agent` | Spawns, steers and resumes background pi subagents from the shell. |
 | [tex-fig](https://github.com/sylvainHellin/tex-fig) | | LaTeX/TikZ package that gives every figure in papers and slides one consistent look (`documents` skill). |
 | [helix-anywhere](https://github.com/sylvainHellin/helix-anywhere) | | Edit the selected text of any macOS application in the Helix editor and paste it back. |
 
 Not public yet:
 
-- meetcap: two-track meeting recorder for macOS (your microphone and the other participants as separate files).
+- meetcap: two-track meeting recorder for macOS (the local microphone and the other participants as separate files).
 - report: the helper that creates and opens HTML report pages; the template itself ships in this repo under `report-html/`.
 - typst2pptx: compiles a Typst deck into a PDF and a PowerPoint file with per-slide speaker notes.
 
@@ -53,7 +53,7 @@ Not public yet:
 | ffmpeg | Frames and contact sheets from videos (`web` skill, YouTube). |
 | yt-dlp | YouTube transcripts and video downloads (`web` skill). |
 | Rust (`rustup`) | Builds the Rust CLIs above with `cargo install --path .`. |
-| stow | Symlinks a dotfiles repo into place; useful if you keep this config in one. |
+| stow | Symlinks a dotfiles repo into place; useful when this config lives in one. |
 | lazygit | Terminal UI for git. |
 | yazi | Terminal file manager. |
 | zoxide | Jumps to frequently used directories. |
@@ -63,7 +63,7 @@ Not public yet:
 | [Superwhisper](https://superwhisper.com) | Dictation and transcription on macOS. |
 | [Obsidian](https://obsidian.md) | The notes vault the `knowledge` skill reads and writes. |
 | [Zotero](https://www.zotero.org) with [Better BibTeX](https://retorque.re/zotero-better-bibtex/) | Reference library and citation keys, reached through `zot`. |
-| [Plane](https://plane.so) | Self-hosted task tracker behind the `productivity` skill; runs in Docker on any server you control. |
+| [Plane](https://plane.so) | Self-hosted task tracker behind the `productivity` skill; runs in Docker on any server. |
 
 ## Install on macOS
 
@@ -79,4 +79,4 @@ pi install npm:pi-vim
 
 Better BibTeX installs from its release page into Zotero.
 Plane self-hosting follows https://developers.plane.so/self-hosting/overview.
-The tools in "Built by me" install from their repos as each README describes.
+The tools in "Own tools" install from their repos as each README describes.

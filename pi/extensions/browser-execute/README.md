@@ -20,7 +20,7 @@ Ported from [browser-use/browsercode](https://github.com/browser-use/browsercode
 
 The tool is registered on every session but removed from the active set at
 `session_start`, so a normal session never carries its schema and never pays the
-prompt cost. Enable it when you need it:
+prompt cost. Enable it when needed:
 
 - `/browser`: show whether it is on for this session.
 - `/browser on`: enable it for this session.

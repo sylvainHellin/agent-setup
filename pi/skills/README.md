@@ -1,6 +1,6 @@
 # Skills
 
-Generic versions of the skills I use with pi.
+Generic versions of the skills used with pi.
 Each top-level folder is one skill; its `SKILL.md` carries the frontmatter pi reads and routes to the parts in its subfolders.
 Adapt the placeholders in angle brackets (`<your vault>`, `<workspace-slug>`) before use.
 
@@ -20,7 +20,7 @@ The CLIs these skills call are listed in `TOOLS.md` at the root of this repo.
 
 pi lists every skill's name and description in the system prompt and reads the full `SKILL.md` only when a task matches.
 It scans `~/.pi/agent/skills/`, `~/.agents/skills/`, the project's `.agents/skills/`, and every path in the `skills` array of `settings.json`.
-Point that array at this folder (`"skills": ["<path to this repo>/pi/skills"]`) or copy the folders you want into `~/.pi/agent/skills/`.
+Either that array points at this folder (`"skills": ["<path to this repo>/pi/skills"]`), or the chosen folders are copied into `~/.pi/agent/skills/`.
 
 A folder that contains a `SKILL.md` is a skill, and pi does not look further down inside it.
 That is why the parts below a skill (`agents/subagents/SKILL.md`, `knowledge/zotero/SKILL.md`) carry no frontmatter and never appear in the skill list: the parent's `SKILL.md` points the agent at them.
