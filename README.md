@@ -10,7 +10,7 @@ Take what fits your work and adapt it; installing everything as it is will not m
 
 | Path | What it is |
 |---|---|
-| [`pi/extensions/`](pi/extensions/README.md) | 25 pi extensions: context management without lossy summaries (`prune`, `smart-compact`), a plan and annotate review loop, `/review` and `/diff` with inline comments, an orchestrator mode, a persistent Python tool, guardrails. |
+| [`pi/extensions/`](pi/extensions/README.md) | 24 pi extensions: context management without lossy summaries (`prune`, `smart-compact`), a plan and annotate review loop, `/review` and `/diff` with inline comments, an orchestrator mode, a persistent Python tool, guardrails. |
 | [`pi/skills/`](pi/skills/README.md) | Seven generic skills: agents (writing skills and instruction files, subagents), code and code review, writing (avoiding AI tells), documents (HTML reports, TikZ figures, document parsing), knowledge (Obsidian vault and Zotero), web, task tracking. |
 | [`pi/AGENTS.md`](pi/AGENTS.md), [`pi/SYSTEM.md`](pi/SYSTEM.md) | Global instructions and a persona template, with placeholders for your own details. |
 | [`pi/agents/`](pi/agents/) | Subagent types for `@tintinweb/pi-subagents`: scout, researcher, worker, reviewer. |
