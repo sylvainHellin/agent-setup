@@ -1,0 +1,23 @@
+{
+  "name": "pi-extension-smart-compact",
+  "private": true,
+  "version": "0.1.2-fork.1",
+  "type": "module",
+  "description": "Cooperative agent-decided context compaction for pi. Vendored fork of @wienerberliner/pi-smart-compact 0.1.2 (MIT).",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typebox": "^1.1.38",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

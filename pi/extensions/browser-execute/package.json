@@ -1,0 +1,21 @@
+{
+  "name": "pi-extension-browser-execute",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "One in-process browser_execute tool driving Chrome over CDP, off by default. Vendored CDP layer from browser-use/browsercode (MIT).",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typebox": "^1.1.38",
+    "typescript": "^5.9.3"
+  }
+}

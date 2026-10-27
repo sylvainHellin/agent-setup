@@ -1,0 +1,22 @@
+{
+  "packages": [
+    "npm:pi-vim",
+    "npm:@tintinweb/pi-subagents"
+  ],
+  "compaction": {
+    "enabled": true
+  },
+  "defaultTools": ["+codemode"],
+  "defaultThinkingLevel": "high",
+  "defaultProjectTrust": "ask",
+  "doubleEscapeAction": "tree",
+  "treeFilterMode": "user-only",
+  "followUpMode": "all",
+  "steeringMode": "one-at-a-time",
+  "enableSkillCommands": true,
+  "enableInstallTelemetry": false,
+  "hideThinkingBlock": false,
+  "terminal": {
+    "showTerminalProgress": true
+  }
+}

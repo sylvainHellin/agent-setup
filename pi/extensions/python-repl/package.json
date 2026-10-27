@@ -1,0 +1,13 @@
+{
+  "name": "pi-extension-python-repl",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "One python tool backed by a persistent IPython kernel per session, with a fixed uv-managed library set.",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

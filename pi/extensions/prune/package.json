@@ -1,0 +1,15 @@
+{
+  "name": "pi-extension-prune",
+  "private": true,
+  "type": "module",
+  "description": "/prune and the prune tool: deterministic context pruning into a new session or in place, plus batched thinking strip on the context event.",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --import ./tests/ts-resolve.mjs --test --test-reporter=spec tests/*.test.ts",
+    "typecheck": "tsc -p ."
+  }
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-doc-id="report-slug">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report title</title>
+<link rel="stylesheet" href="report.css">
+<!-- TUM theme: uncomment the next line (keep it after report.css). -->
+<!-- <link rel="stylesheet" href="theme-tum.css"> -->
+<script src="report.js"></script>
+</head>
+<body>
+<main>
+
+<p class="eyebrow">Project · Kind of report</p>
+<h1>Report title, stated as the finding rather than a label</h1>
+<p class="lede">Two or three sentences: what this page contains, what it was drawn from, and what the reader should do with it.</p>
+<p class="meta"><span>1 January 2026</span><span>Sources: repo, issue tracker, notes</span></p>
+
+<div class="kpis">
+  <div class="kpi"><span class="kpi-label">Key figure</span><span class="kpi-value">1,404</span><span class="kpi-note">what the number counts</span></div>
+  <div class="kpi accent"><span class="kpi-label">Next deadline</span><span class="kpi-value">30 Jan</span><span class="kpi-note">what is due</span></div>
+</div>
+
+<div class="callout warning">
+<p class="callout-title">The one thing that must not be missed</p>
+<p>Other kinds: <code>note</code>, <code>decision</code>, <code>success</code>.</p>
+</div>
+
+<h2>First section</h2>
+<p>Prose with a <code>literal</code> and badges: <span class="badge ok">done</span> <span class="badge accent">you</span>.</p>
+
+<table>
+<tr><th>Item</th><th>Owner</th><th class="num">Count</th></tr>
+<tr><td>First row</td><td>Reader</td><td class="num">12</td></tr>
+</table>
+
+<pre data-lang="bash"><code>echo "every code block gets a Copy button"</code></pre>
+
+<h2>Questions for you</h2>
+<div class="question" data-id="q1" data-type="single">
+<p class="q-text">A question with one answer?</p>
+<ul><li>First option</li><li>Second option</li></ul>
+</div>
+<div class="question" data-id="q2" data-type="text">
+<p class="q-text">An open question answered in free text?</p>
+</div>
+
+</main>
+</body>
+</html>

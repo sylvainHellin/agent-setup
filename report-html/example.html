@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-doc-id="report-html-example">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job queue for the import service</title>
+<link rel="stylesheet" href="report.css">
+<!-- TUM theme: uncomment the next line (keep it after report.css). -->
+<!-- <link rel="stylesheet" href="theme-tum.css"> -->
+<script src="report.js"></script>
+</head>
+<body>
+<main>
+
+<p class="eyebrow">Import service · Design decision</p>
+<h1>Run the import jobs from a Postgres table and skip the Redis queue</h1>
+<p class="lede">The nightly cron import has outgrown its single run.
+This page compares three ways to move it onto a job queue, recommends a queue table in the Postgres database the service already uses, and lists what still needs your answer.</p>
+<p class="meta"><span>14 January 2026</span><span>Sources: load test of 12 January, service logs, design review notes</span></p>
+
+<div class="kpis">
+  <div class="kpi"><span class="kpi-label">Jobs per day</span><span class="kpi-value">12,400</span><span class="kpi-note">files imported, median of the last 30 days</span></div>
+  <div class="kpi"><span class="kpi-label">Peak load</span><span class="kpi-value">180/min</span><span class="kpi-note">Monday mornings</span><span class="kpi-delta up">+40 % since October</span></div>
+  <div class="kpi"><span class="kpi-label">New services</span><span class="kpi-value">0</span><span class="kpi-note">with the Postgres option</span></div>
+  <div class="kpi accent"><span class="kpi-label">Decision needed by</span><span class="kpi-value">21 Jan</span><span class="kpi-note">sprint planning</span></div>
+</div>
+
+<div class="callout note">
+<p class="callout-title">How to review this page</p>
+<p>Select any text and press Add comment, or press Pick in the top bar and click a paragraph, table row, figure or code block.
+Answer the three question cards at the end, write anything else in General notes, then press Cmd+Shift+X and paste the Markdown into the chat.</p>
+</div>
+
+<h2>Why the cron job has to go</h2>
+<p>The import runs once at 02:00 and processes every file uploaded during the day in one Python process.
+Three problems have become regular:</p>
+<ul>
+  <li>A single malformed file stops the whole run, and the remaining files wait a full day.</li>
+  <li>The run now takes 3 h 40 min and overlaps with the 06:00 backup on most Mondays.</li>
+  <li>Users who upload in the morning see their data only the next day.</li>
+</ul>
+<p>A job queue imports each file as soon as it arrives, retries failures one file at a time, and scales by adding workers.</p>
+
+<h2>Options compared</h2>
+<table>
+<tr><th>Option</th><th>New infrastructure</th><th class="num">Throughput in load test</th><th>Retries and scheduling</th><th>Verdict</th></tr>
+<tr><td>Celery with Redis</td><td>Redis, Celery workers, Flower for monitoring</td><td class="num">2,100/min</td><td>built in, many options</td><td><span class="badge neutral">too heavy</span></td></tr>
+<tr><td>RQ with Redis</td><td>Redis</td><td class="num">1,400/min</td><td>built in, simple</td><td><span class="badge warn">viable</span></td></tr>
+<tr><td>Postgres queue table</td><td>none</td><td class="num">950/min</td><td>about 60 lines of our own code</td><td><span class="badge ok">recommended</span></td></tr>
+</table>
+<p class="src">Throughput measured on the staging database with four workers and 2 MB files; peak demand is 180 jobs per minute.</p>
+
+<p>All three options clear the peak by a factor of five or more.
+The Postgres table wins on operations: no new service to deploy, monitor, back up or secure, and a job is created in the same transaction as the upload record, so an upload can never exist without its job.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 860 210" role="img" aria-label="Upload API writes a row to the jobs table; workers claim rows and write results back">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+    </marker>
+  </defs>
+  <g font-size="14" fill="currentColor">
+    <rect x="30" y="60" width="190" height="90" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+    <text x="125" y="98" text-anchor="middle" font-weight="600">Upload API</text>
+    <text x="125" y="120" text-anchor="middle" fill="var(--muted)" font-size="12">inserts upload and job</text>
+
+    <rect x="335" y="40" width="200" height="130" rx="10" fill="var(--primary-soft)" stroke="var(--ocean)" stroke-width="2"/>
+    <text x="435" y="78" text-anchor="middle" font-weight="600">Postgres</text>
+    <text x="435" y="102" text-anchor="middle" font-size="12" fill="var(--muted)">table import_jobs</text>
+    <text x="435" y="124" text-anchor="middle" font-size="12" fill="var(--muted)">status, attempts, run_after</text>
+    <text x="435" y="146" text-anchor="middle" font-size="12" fill="var(--muted)">FOR UPDATE SKIP LOCKED</text>
+
+    <rect x="650" y="20" width="180" height="50" rx="8" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+    <text x="740" y="50" text-anchor="middle" font-weight="600">Worker 1</text>
+    <rect x="650" y="80" width="180" height="50" rx="8" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
+    <text x="740" y="110" text-anchor="middle" font-weight="600">Worker 2</text>
+    <rect x="650" y="140" width="180" height="50" rx="8" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <text x="740" y="170" text-anchor="middle" fill="var(--muted)">Worker n</text>
+
+    <line x1="222" y1="105" x2="331" y2="105" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="537" y1="80" x2="646" y2="45" stroke="var(--muted)" stroke-width="1.5" marker-start="url(#arrow)"/>
+    <line x1="537" y1="105" x2="646" y2="105" stroke="var(--muted)" stroke-width="1.5" marker-start="url(#arrow)"/>
+    <line x1="537" y1="130" x2="646" y2="165" stroke="var(--muted)" stroke-width="1.5" marker-start="url(#arrow)" stroke-dasharray="5 4"/>
+    <text x="591" y="200" text-anchor="middle" fill="var(--muted)" font-size="12">workers claim jobs</text>
+  </g>
+</svg>
+<figcaption>The proposed design: the API writes the job in the upload transaction, and any number of workers claim jobs from the same table.</figcaption>
+</figure>
+
+<h2>How the Postgres queue works</h2>
+<h3>Claiming a job</h3>
+<p>Each worker claims the oldest due job in one statement.
+<code>SKIP LOCKED</code> lets concurrent workers pass over rows another worker holds, so two workers never take the same job.</p>
+<pre data-lang="sql"><code>UPDATE import_jobs
+SET status = 'running', attempts = attempts + 1, started_at = now()
+WHERE id = (
+  SELECT id FROM import_jobs
+  WHERE status = 'queued' AND run_after &lt;= now()
+  ORDER BY run_after
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1
+)
+RETURNING id, upload_id;</code></pre>
+
+<h3>Worker loop</h3>
+<pre data-lang="python"><code>while True:
+    job = claim_job(conn)
+    if job is None:
+        wait_for_notify(conn, "import_jobs", timeout=30)
+        continue
+    try:
+        import_file(job.upload_id)
+        mark_done(conn, job.id)
+    except Exception as exc:
+        retry_later(conn, job.id, error=str(exc))  # backoff: 1, 5, 30 minutes</code></pre>
+<p>A <code>LISTEN</code>/<code>NOTIFY</code> pair wakes idle workers when a job arrives, so they do not poll the table.</p>
+
+<blockquote>If the queue ever needs more than a thousand jobs a minute, we move to RQ; the job table stays as the record of what was imported.
+<span class="src">Design review, 12 January 2026</span></blockquote>
+
+<div class="grid-2">
+<div class="card">
+<h3>What we gain</h3>
+<ul>
+  <li>Files import within a minute of upload.</li>
+  <li>A failed file retries alone, three times, then lands in a list for a human.</li>
+  <li>The job history is a table we can query with SQL.</li>
+</ul>
+</div>
+<div class="card">
+<h3>What we give up</h3>
+<ul>
+  <li>Scheduling features Celery has built in, such as rate limits per task type.</li>
+  <li>A ready-made monitoring dashboard; we add two panels to the existing one.</li>
+  <li>Headroom above about 950 jobs a minute without further work.</li>
+</ul>
+</div>
+</div>
+
+<dl class="fields">
+  <dt>Owner</dt><dd>Backend team</dd>
+  <dt>Effort</dt><dd>3 days, including the migration of the cron job</dd>
+  <dt>Rollback</dt><dd>Re-enable the cron entry; it reads the same uploads table</dd>
+</dl>
+
+<details>
+<summary>Load test setup</summary>
+<p>Staging database on the same instance size as production, four workers on one host, 5,000 synthetic files of 2 MB each, queued in one burst.
+Each option ran three times; the table shows the median.</p>
+</details>
+
+<div class="callout warning">
+<p class="callout-title">Risk: table bloat</p>
+<p>A queue table with many updates per row grows dead tuples quickly.
+Finished jobs move to an archive table every night, and the table gets its own autovacuum settings.</p>
+</div>
+
+<div class="callout success">
+<p class="callout-title">Prototype done</p>
+<p>The prototype on staging imported the 5,000-file burst in 5 min 15 s with no duplicate and no lost job.</p>
+</div>
+
+<h2>Decisions for you</h2>
+<div class="callout decision">
+<ol>
+<li>Adopt the Postgres queue table for the import service (recommended), or go straight to RQ with Redis.</li>
+<li>Keep the cron entry disabled but in place for one month as a rollback path (recommended), or remove it with the migration.</li>
+</ol>
+</div>
+
+<div class="question" data-id="queue-choice" data-type="single">
+<p class="q-text">Which queue should the import service use?</p>
+<ul>
+  <li data-value="postgres">Postgres queue table (recommended)</li>
+  <li data-value="rq">RQ with Redis</li>
+  <li data-value="celery">Celery with Redis</li>
+</ul>
+</div>
+
+<div class="question" data-id="monitoring" data-type="multi">
+<p class="q-text">Which alerts should the first version include?</p>
+<ul>
+  <li data-value="backlog">Queue backlog above 1,000 jobs</li>
+  <li data-value="failed">Any job that failed three times</li>
+  <li data-value="age">Oldest queued job older than 15 minutes</li>
+</ul>
+</div>
+
+<div class="question" data-id="file-types" data-type="text">
+<p class="q-text">Are there file types that must keep the nightly batch, for example because a partner delivers them in one bundle?</p>
+</div>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "toolDescriptionMode": "custom",
+  "schedulingEnabled": false,
+  "disableDefaultAgents": true,
+  "workflowsEnabled": true
+}

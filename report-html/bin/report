@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""report: create report pages from the report-html skeleton and open them in the browser.
+
+  report new <path> [--title T] [--id slug] [--theme default|tum]
+  report open <path>
+
+`new` copies report.html to <path>, sets <title>, the h1 and data-doc-id, and points the
+stylesheet and script links at this template folder by absolute file:// URL, so the page works
+wherever it is saved. `open` opens a page in the default browser (in the background on macOS).
+The template folder is the parent of this script's folder, or $REPORT_HTML_DIR when set.
+Standard library only.
+"""
+
+import argparse
+import html
+import os
+import platform
+import re
+import subprocess
+import sys
+import webbrowser
+from pathlib import Path
+
+TEMPLATE_DIR = Path(os.environ.get("REPORT_HTML_DIR") or Path(__file__).resolve().parent.parent).expanduser()
+THEMES = {"default": None, "tum": "theme-tum.css"}
+
+
+def die(msg: str) -> None:
+    print(f"report: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_new(args: argparse.Namespace) -> None:
+    dest = Path(args.path).expanduser().absolute()
+    skeleton = TEMPLATE_DIR / "report.html"
+    if not skeleton.is_file():
+        die(f"skeleton not found: {skeleton} (set REPORT_HTML_DIR to the report-html folder)")
+    page = skeleton.read_text(encoding="utf-8")
+    base = TEMPLATE_DIR.resolve()
+
+    # Absolute file:// links, so the page finds the shared assets from any folder.
+    page = page.replace('href="report.css"', f'href="{(base / "report.css").as_uri()}"', 1)
+    page = page.replace('src="report.js"', f'src="{(base / "report.js").as_uri()}"', 1)
+    if args.theme not in THEMES:
+        die(f"unknown theme {args.theme!r}; choose one of: {', '.join(sorted(THEMES))}")
+    theme_css = THEMES[args.theme]
+    theme_switch = re.compile(r"<!-- TUM theme:.*?-->\n<!-- (<link [^>]*theme-tum\.css\">) -->\n", re.S)
+    if theme_css:
+        link = f'<link rel="stylesheet" href="{(base / theme_css).as_uri()}">\n'
+        page, n = theme_switch.subn(lambda _: link, page, count=1)
+        if not n:
+            die("the skeleton has no theme switch comment to replace")
+    else:
+        page = theme_switch.sub("", page, count=1)
+
+    # Replacements go through lambdas so a backslash in the title stays literal.
+    slug = args.id or dest.stem
+    page = re.sub(r'data-doc-id="[^"]*"', lambda _: f'data-doc-id="{html.escape(slug)}"', page, count=1)
+    if args.title:
+        title = html.escape(args.title, quote=False)
+        page = re.sub(r"<title>.*?</title>", lambda _: f"<title>{title}</title>", page, count=1, flags=re.S)
+        page = re.sub(r"<h1>.*?</h1>", lambda _: f"<h1>{title}</h1>", page, count=1, flags=re.S)
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(dest, "x", encoding="utf-8") as f:
+            f.write(page)
+    except FileExistsError:
+        die(f"{dest} already exists; refusing to overwrite")
+    print(dest)
+
+
+def cmd_open(args: argparse.Namespace) -> None:
+    target = Path(args.path).expanduser().absolute()
+    if not target.is_file():
+        die(f"{target} is not a file")
+    if platform.system() == "Darwin":
+        sys.exit(subprocess.call(["open", "-g", str(target)]))
+    if not webbrowser.open(target.as_uri()):
+        die(f"no browser found; open {target.as_uri()} by hand")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(prog="report", description=__doc__.split("\n\n")[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("new", help="create a page from the report-html skeleton")
+    p.add_argument("path")
+    p.add_argument("--title", help="sets <title> and the h1")
+    p.add_argument("--id", help="data-doc-id slug (default: the file stem)")
+    p.add_argument("--theme", choices=sorted(THEMES), default=os.environ.get("REPORT_THEME", "default"),
+                   help="look of the page (default: $REPORT_THEME, else default)")
+    p.set_defaults(fn=cmd_new)
+    p = sub.add_parser("open", help="open a page in the default browser")
+    p.add_argument("path")
+    p.set_defaults(fn=cmd_open)
+    args = ap.parse_args()
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()
