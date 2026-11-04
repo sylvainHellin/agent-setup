@@ -13,6 +13,8 @@ Never do the work the lesson is about (solving their exercise, writing their cod
 
 - Before explaining, ask at most three short questions in the chat: what they already know about the topic, what they need it for, and how deep to go.
 - Thinking before reading is part of the lesson; if they answer "just go", assume a technical reader new to the topic.
+- List the building blocks: the two to four concepts the big idea rests on, and which of them the user already has.
+  The curse of knowledge hides the blocks that feel obvious to you, so start from their answers, not from what seems basic.
 
 ## 2. Gather the sources
 
@@ -25,13 +27,18 @@ Never do the work the lesson is about (solving their exercise, writing their cod
 - Keep the first page readable in ten minutes: at most five sections and three figures; depth comes in the later rounds.
 - Write only inside `<main>`; the classes (callouts, figures, `details`, question cards) are listed in `SKILL_DIR/assets/components.md`.
 - Teach in the style of the FastAPI tutorial:
-  - open with intuition, a practical takeaway or an analogy, and give the formal definition only once the idea has landed;
+  - open with a question or a puzzle from the user's world that the topic answers, so they are curious before the first definition;
+  - give intuition, a practical takeaway or an analogy first, and the formal definition only once the idea has landed;
   - carry one running example through the whole page, taken from the user's world when possible (their project, their repo, their field);
-  - one idea per section, each building on the previous one, and no term used before it is introduced;
+  - build the big idea block by block, like a tower: one building block per section, each resting on the previous one, and the big idea only once its blocks are in place;
+  - give each new block a name, one metaphor that shows its shape and one strong example, and use no term before it is introduced;
+  - before a surprising result, ask the user to predict it, then fill the gap between their guess and the result;
+  - when the idea contradicts something the user believes, name the belief and show where it breaks before building the new one;
   - plain words first, then the technical term;
   - short paragraphs, one idea each;
   - for code, a runnable snippet per step with its expected output;
-  - for a codebase, a map of the main parts and how data flows first, then the one real path through the code.
+  - for a codebase, a map of the main parts and how data flows first, then the one real path through the code;
+  - close the last section with what the idea changes: what the user now sees or does differently in their own work.
 - One figure per step that agrees with the text, drawn as described in step 4.
 - Before the sources, a `Recall` section with three `data-type="text"` question cards that ask the user to explain, predict or apply, never to repeat a definition; the page holds no answers.
 - End with a short `Go further` list of sources.
