@@ -142,6 +142,31 @@
 % Target width of a figure; the including document may override it.
 \providecommand{\tffigwidth}{\linewidth}
 
+% Step-by-step reveals for slides. \tfstep is the step being drawn; it defaults
+% to a number past any figure's last step, so a paper or a plain build shows
+% everything. Hidden content is drawn fully transparent rather than left out,
+% so every step keeps the bounding box of the last one and slides do not jump.
+%   \node[tfcard, tffrom=2] ...;            % one node or path, from step 2 on
+%   \tfshowfrom{3}{ \node ...; \draw ...; }  % a group, from step 3 on
+% The group form wraps its content in a transparency group, so a node inside
+% it with its own opacity is hidden too, and so is content it puts on the
+% background or grouping layer. examples/build.sh renders one PNG per step
+% with STEPS=<n>.
+\providecommand{\tfstep}{99}
+\newcommand{\tfshowfrom}[2]{%
+  \ifnum\tfstep<#1\relax
+    \begin{scope}[transparency group, opacity=0]%
+      % Layer content lands in a separate box outside this group, so each
+      % layer block opens its own transparent group.
+      \let\tf@pgfonlayer\pgfonlayer
+      \let\tf@endpgfonlayer\endpgfonlayer
+      \def\pgfonlayer##1{\tf@pgfonlayer{##1}\scope[transparency group, opacity=0]}%
+      \def\endpgfonlayer{\endscope\tf@endpgfonlayer}%
+      #2\end{scope}%
+  \else
+    \begin{scope}#2\end{scope}%
+  \fi}
+
 % Alignment helpers, so an arrow between two nodes can be exactly horizontal or
 % exactly vertical without hand-tuned coordinates.
 %   \node[...] at (\tfrow{23.2}{cardPc.east}) {...};  % x 23.2, y of cardPc.east
@@ -165,6 +190,8 @@
 
 % ------------------------------------------------------------ node styles ----
 \tikzset{
+  % Draw a node or a path only from step #1 on (see \tfstep above).
+  tffrom/.code={\ifnum\tfstep<#1\relax\tikzset{opacity=0, text opacity=0}\fi},
   % Solid light grey panel grouping one column of a picture. Background layer.
   tfpanel/.style={
     rounded corners=12pt,
