@@ -1,0 +1,90 @@
+%% texfig-plots.sty -- pgfplots styling for texfig, for the figures that carry
+%% measured numbers rather than boxes and arrows. Load it instead of texfig.
+%% The package holds the look of an axis; the document holds the data.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{texfig-plots}[2026/09/18 figure kit, plots]
+
+% Options of this package belong to texfig; a document loads one or the other,
+% never both, so palette= and font= have to reach it from here too.
+\DeclareOption*{\PassOptionsToPackage{\CurrentOption}{texfig}}
+\ProcessOptions\relax
+
+\RequirePackage{texfig}
+\RequirePackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% An open five-pointed star as a plot mark, for the one series a figure argues
+% about. It follows the colour given in mark options, like any other mark.
+\pgfdeclareplotmark{tfstarmark}{%
+  \node[star, star points=5, star point ratio=2.1, draw, fill=white,
+        line width=1.1pt, inner sep=0pt, minimum size=10pt, anchor=center]
+       at (0pt,0pt) {};}
+
+\pgfplotsset{
+  % The shared look: no frame, a thin grey rule on the axes that remain, grid
+  % lines light enough to read a value against without competing with the data.
+  tfaxis/.style={
+    scale only axis,
+    axis line style={draw=tfGray!55, line width=0.6pt},
+    tick style={draw=tfGray!55, line width=0.6pt},
+    grid style={draw=tfGray!25, line width=0.4pt},
+    tick label style={font=\small, text=tfDarkGray},
+    label style={font=\small, text=tfDarkGray},
+    tick align=outside,
+    % tick labels in the text face: in math mode they would keep Computer
+    % Modern digits whenever the font option has no matching math font (helvet)
+    /pgf/number format/assume math mode=true,
+    clip=false},
+  % Horizontal bars against a category axis, which carries no line of its own.
+  tfbaraxis/.style={
+    tfaxis,
+    xbar,
+    % every series on the category's centre line, so the highlighted bar drawn
+    % as a second series sits on its label instead of beside it
+    bar shift=0pt,
+    axis x line*=bottom,
+    % the category axis carries names, not a scale, so its rule and ticks go
+    axis y line*=left,
+    y axis line style={draw=none},
+    ytick style={draw=none},
+    xmajorgrids,
+    ytick=data,
+    bar width=0.42cm,
+    enlarge y limits=0.09,
+    y tick label style={font=\small, text=tfDarkGray},
+    nodes near coords,
+    point meta=explicit symbolic,
+    every node near coord/.append style={
+      font=\small, text=tfDarkGray, anchor=west, inner sep=3pt}},
+  % A value plot: both axes drawn, grid on the measured axis only.
+  tfplotaxis/.style={
+    tfaxis,
+    axis x line*=bottom,
+    axis y line*=left,
+    ymajorgrids,
+    log ticks with fixed point},
+  % One bar series, tinted in an accent colour.
+  tfbar/.style={draw=#1!60, fill=#1!14, line width=0.7pt},
+  % Scatter marks: a plain point, and the one the figure is about.
+  tfpoint/.style={
+    only marks, mark=o, mark size=2.3pt,
+    mark options={draw=#1!65, line width=0.7pt}},
+  tfstar/.style={
+    only marks, mark=tfstarmark,
+    mark options={draw=#1}},
+  % A line through the points that form the frontier, and a trend behind them.
+  tfline/.style={draw=#1, line width=1pt, mark=none},
+  tftrend/.style={
+    draw=tfGray!55, line width=0.7pt, mark=none,
+    dash pattern=on 3pt off 2.5pt},
+}
+
+\tikzset{
+  % The name of a point, set beside it inside the axis.
+  tfpointlabel/.style={font=\scriptsize, text=tfDarkGray, inner sep=2.5pt},
+  tfpointlabelc/.style={tfpointlabel, text=#1!62!black, font=\scriptsize\bfseries},
+  % The (a), (b), (c) of a multi-panel figure.
+  tfpanelletter/.style={font=\large, text=tfDark, anchor=west},
+}
+
+\endinput

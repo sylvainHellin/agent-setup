@@ -13,6 +13,7 @@ Adapt the placeholders in angle brackets (`<your vault>`, `<workspace-slug>`) be
 | `knowledge` | Any read or write in an Obsidian vault; papers, citations and Zotero | Vault search with `rg`, `fd` and `qmd`, capture discipline for notes, and the `zot` CLI for a Zotero library. |
 | `web` | Any web fetch, search, sourced answer, crawl or YouTube video; operating a website | The `web` CLI with its provider chain, YouTube transcripts with `yt-dlp`, and browser automation notes. |
 | `productivity` | Todos, tasks, Plane issues | The `plane` CLI for a self-hosted Plane instance, with conventions for states, dates and labels. |
+| `tutor` | Learning a concept, a method or an unfamiliar codebase | A lesson page in the HTML report template with tex-fig figures and recall questions, graded through the comment round trip. Self-contained, so it also works in Claude Code (`~/.claude/skills/tutor`), Codex (`~/.agents/skills/tutor`) and Gemini CLI (`~/.gemini/skills/tutor`). |
 
 The CLIs these skills call are listed in `TOOLS.md` at the root of this repo.
 
