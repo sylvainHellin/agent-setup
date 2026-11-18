@@ -15,13 +15,13 @@ The skills in `pi/skills/` name the ones they call.
 | [tts-cli](https://github.com/sylvainHellin/tts-cli) | `tts` | Text to speech: a thin wrapper around the MiniMax API, with optional local CPU backends (Kokoro, StyleTTS2, Chatterbox). |
 | [textfold](https://github.com/sylvainHellin/textfold) | `textfold` | Fork of TextFold (chenxiachan/textfold), which folds any text from a one-screen map down to every word. |
 | [agent-cli](https://github.com/sylvainHellin/agent-cli) | `agent` | Spawns, steers and resumes background pi subagents from the shell. |
+| [agent-pages](https://github.com/sylvainHellin/agent-pages) | `agent-pages` | HTML report pages and lessons the reader comments on in the browser: the page template, the CLI, a server with a library app, and the `agent-pages` and `tutor` skills. |
 | [tex-fig](https://github.com/sylvainHellin/tex-fig) | | LaTeX/TikZ package that gives every figure in papers and slides one consistent look (`documents` skill). |
 | [helix-anywhere](https://github.com/sylvainHellin/helix-anywhere) | | Edit the selected text of any macOS application in the Helix editor and paste it back. |
 
 Not public yet:
 
 - meetcap: two-track meeting recorder for macOS (the local microphone and the other participants as separate files).
-- report: the helper that creates and opens HTML report pages; the template itself ships in this repo under `report-html/`.
 - typst2pptx: compiles a Typst deck into a PDF and a PowerPoint file with per-slide speaker notes.
 
 ## Harness and terminal

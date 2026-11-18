@@ -3,6 +3,9 @@
     "npm:pi-vim",
     "npm:@tintinweb/pi-subagents"
   ],
+  "skills": [
+    "~/code/agent-pages/skills"
+  ],
   "compaction": {
     "enabled": true
   },

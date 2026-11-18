@@ -10,12 +10,14 @@ It is meant as an inspiration to adapt and customize, rather than a setup to cop
 | Path | What it is |
 |---|---|
 | [`pi/extensions/`](pi/extensions/README.md) | 24 pi extensions: context management without lossy summaries (`prune`, `smart-compact`), a plan and annotate review loop, `/review` and `/diff` with inline comments, an orchestrator mode, a persistent Python tool, guardrails. |
-| [`pi/skills/`](pi/skills/README.md) | Seven generic skills: agents (writing skills and instruction files, subagents), code and code review, writing (avoiding AI tells), documents (HTML reports, TikZ figures, document parsing), knowledge (Obsidian vault and Zotero), web, task tracking. |
+| [`pi/skills/`](pi/skills/README.md) | Seven generic skills: agents (writing skills and instruction files, subagents), code and code review, writing (avoiding AI tells), documents (Typst and LaTeX, TikZ figures, document parsing), knowledge (Obsidian vault and Zotero), web, task tracking. |
 | [`pi/AGENTS.md`](pi/AGENTS.md), [`pi/SYSTEM.md`](pi/SYSTEM.md) | Global instructions and a persona template, with placeholders for personal details. |
 | [`pi/agents/`](pi/agents/) | Subagent types for `@tintinweb/pi-subagents`: scout, researcher, worker, reviewer. |
 | [`pi/prompts/`](pi/prompts/) | Prompt templates: plan, brainstorm, debug, grill-me, research, handoffs, wrap-up, commit. |
-| [`report-html/`](report-html/README.md) | The HTML report template: the agent writes long answers as a page, the reader comments inline in the browser and pastes the exported comments back into the chat. Default and TUM themes. |
 | [`TOOLS.md`](TOOLS.md) | The CLIs and apps the setup relies on. |
+
+HTML report pages and lessons come from [agent-pages](https://github.com/sylvainHellin/agent-pages): the agent writes a long answer or a lesson as a page, the reader comments inline in the browser and pastes the exported comments back into the chat.
+That repo holds the page template with its themes (plain, TUM), the `agent-pages` CLI, and the `agent-pages` and `tutor` skills.
 
 For TikZ figures in one consistent look, see [tex-fig](https://github.com/sylvainHellin/tex-fig); the `documents` skill teaches the agent to use it.
 
@@ -42,6 +44,9 @@ cp pi/SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
 The placeholders in `AGENTS.md` and `APPEND_SYSTEM.md` need filling in, and [`pi/settings.example.json`](pi/settings.example.json) merges into `~/.pi/agent/settings.json`; pi picks everything up after a restart.
 `agent-tool-description.md` and `subagents.json` configure `@tintinweb/pi-subagents`.
 The third-party CLIs the skills call are listed in [`TOOLS.md`](TOOLS.md), with a Homebrew install block.
+
+For report pages and lessons, agent-pages installs as its README describes (sections Install, Configure and Agent skills).
+The `skills` entry in `settings.example.json` already points pi at its skills in `~/code/agent-pages/skills`.
 
 ## License
 

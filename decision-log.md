@@ -7,24 +7,27 @@ Rejected: making `sylvainHellin/dotfiles` public after a secret rotation and a h
 Source: chat with Sylvain, 2026-10-27.
 Status: accepted
 
-## 2026-10-27 - Scope: pi extensions first, then generic skills, the tool list and the HTML report template
+## 2026-10-27 - Scope: pi extensions first, then generic skills and the tool list
 
 Why: the extensions are the most reusable part for colleagues on the same harness; skills, AGENTS.md and the tool list are shared as generic versions to adapt.
+The HTML report template and the tutor skill come from the agent-pages repo (entry below).
 Rejected: a plain copy of the private skills.
 Source: chat with Sylvain, 2026-10-27.
 Status: accepted
 
-## 2026-10-27 - The HTML report template ships with a TUM theme next to the default one
-
-Why: most readers of the repo are at TUM and want reports in the TUM look.
-Rejected: a separate repo for the template.
-Source: chat with Sylvain, 2026-10-27.
-Status: accepted
-
-## 2026-11-04 - A tutor skill for students: lesson page in the report template, tex-fig figures rendered with an online fallback
+## 2026-11-04 - A tutor skill for students: lesson page with figures, recall questions and the comment round trip
 
 Why: the 5 November guest lecture lets students learn a topic they never quite understood through a lesson page with figures and recall questions, and the comment round trip of the report template is what turns the page into a dialogue.
-The skill carries copies of the template assets and of `texfig.sty`, so a student copies one folder; `render_fig.py` compiles with a local `tectonic` or `pdflatex` and otherwise with latex.ytotech.com, then converts the PDF to SVG with PyMuPDF.
+The skill now lives in agent-pages (entry below); its figures come from matplotlib by default, or from tex-fig with a local `tectonic`.
 Rejected: a minimal template with folded answers (no round trip), inline SVG or Mermaid figures (weaker look), a separate course repo (splits the material).
 Source: lecture plan report comments, 2026-11-03 and 2026-11-04.
+Status: accepted
+
+## 2026-11-18 - Report pages and lessons come from the public agent-pages repo, which this repo points to instead of carrying copies
+
+Why: agent-pages (github.com/sylvainHellin/agent-pages, MIT) is public since 2026-11-12 and holds the maintained template, its TUM theme, the `agent-pages` CLI and the `agent-pages` and `tutor` skills, so two copies would drift.
+This repo kept its own `report-html/` template and `pi/skills/tutor/` only while agent-pages was private.
+The TUM theme stays available, since most readers of the repo are at TUM.
+Rejected: keeping the copies next to the pointer.
+Source: chat with Sylvain, 2026-10-27 (TUM theme) and 2026-11-18 (PERSO-299).
 Status: accepted

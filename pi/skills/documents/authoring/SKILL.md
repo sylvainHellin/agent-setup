@@ -11,7 +11,7 @@ If no template fits the request, or the theme is ambiguous, ask before improvisi
 
 Cross-cutting slide craft (authoring guidelines, speaker notes, outline convention, visual verification, PPTX export) applies to every deck: [slides.md](slides.md).
 
-An HTML report page (`report-html/` at the root of this repo) is the default for anything beyond a short chat answer: explanations with figures, audits, comparisons, research syntheses, and any batch of questions for the user.
+An HTML report page (`agent-pages` skill) is the default for anything beyond a short chat answer: explanations with figures, audits, comparisons, research syntheses, and any batch of questions for the user.
 Markdown stays right for short records and for anything another program reads; a Typst report stays right for what leaves the house as a PDF.
 
 ## Cross-cutting conventions
