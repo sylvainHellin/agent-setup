@@ -56,7 +56,7 @@ Facts about the world, people, or projects belong in the vault via the `knowledg
 
 ## 4. Report
 
-For each surviving candidate, give the evidence in one line (name the session if it is not this one), the exact target file path, the exact text to insert with enough surrounding context to place it, one line on why that surface and not the next one up, and anything it replaces or makes redundant.
+For each surviving candidate, lead with the exact text to insert, then give the exact target file path with enough surrounding context to place it, the evidence in one line (name the session if it is not this one), one line on why that surface and not the next one up, and anything it replaces or makes redundant.
 
 Don't list or mention rejected candidates.
 

@@ -13,8 +13,7 @@ export function stripAnsi(str: string): string {
 	return str.replace(/\x1b\[[0-9;]*[a-zA-Z]|\x1b\]8;[^;]*;[^\x1b]*\x1b\\|\x1b[^[\]].?/g, "");
 }
 
-// Mirror the nvim annotations plugin's `export_markdown` (the `<leader>cx`
-// output) so annotate feedback reads identically: a plain `Re L<n>:` label,
+// Annotate feedback format: a plain `Re L<n>:` label,
 // then a blockquote holding only the source line, then the comment as its own
 // flush-left paragraph. Single-line content uses a code-span fence sized past
 // any backtick run in the source; multi-line content uses a fenced code block.

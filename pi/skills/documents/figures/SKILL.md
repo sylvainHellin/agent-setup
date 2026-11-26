@@ -8,7 +8,7 @@ A figure is TikZ source, never an imported PNG or SVG, so it stays diffable and 
 
 1. `ls <tex-fig clone>/examples/`, pick the nearest figure and copy its structure; a new figure almost never starts from an empty canvas.
 2. Author on a comfortable centimetre canvas and wrap the picture in `\resizebox{\tffigwidth}{!}{...}`, so the including document decides the width.
-3. Render with `examples/build.sh <name|path.tex> [dpi]`, which leaves a PNG in the output folder set at the top of the script (`~/Documents/tmp` by default; edit `out=` to taste); `PALETTE=tum` previews another brand and suffixes the filename with the palette (`f1-tum.png`).
+3. Render with `examples/build.sh <name|path.tex> [dpi]`, which leaves a PNG in `~/Documents/tmp/` by default (`OUT=<dir>` writes it elsewhere); `PALETTE=tum` previews another brand and suffixes the filename with the palette (`f1-tum.png`); `STEPS=<n>` writes one PNG per step of a slide figure that reveals itself with `tffrom` and `\tfshowfrom` (README, `examples/stepped-reveal.tex`).
 4. Read the PNG, compare it against what the figure should say, fix, repeat.
 5. Vendor the package into the paper with `./sync.sh <paper-dir>` and commit inside the paper repo, which compiles from its own tree alone.
 
@@ -18,7 +18,8 @@ A figure is TikZ source, never an imported PNG or SVG, so it stays diffable and 
 - Align with `\tfrow{x}{node.anchor}` and `\tfcol{node.anchor}{y}`: a fitted card's centre is not where its content looks centred, and an arrow drawn to a guessed coordinate runs downhill.
 - Panels and group boxes come last, `fit=` around their content; within one layer the later node covers the earlier, so a box sitting inside a panel is declared after it.
 - A style needed by two figures belongs in the package, not copied into the second figure.
-- Renders are never committed; move the PNG to wherever the user reads it (the report page's folder, a shared folder) instead.
+- A preview render is never committed; move the PNG to wherever the user reads it (the report page's folder, a shared folder) instead.
+  The exception is a PNG that a repo's own build embeds (an HTML page inlining its figures): it is committed next to its source with `OUT=<figures dir>`, because a co-author without tex-fig cannot render it.
 
 ## Data charts (matplotlib, pgfplots)
 

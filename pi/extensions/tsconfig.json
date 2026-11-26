@@ -18,6 +18,6 @@
       "typebox": ["./node_modules/@earendil-works/pi-coding-agent/node_modules/typebox/build/index.d.mts"]
     }
   },
-  "include": ["./*.ts", "./*/*.ts", "./*/src/*.ts", "./browser-execute/cdp/*.ts", "./prune/tests/*.ts"],
-  "exclude": ["node_modules", "browser-execute/cdp/gen.ts", "smart-compact/vitest.config.ts"]
+  "include": ["./*.ts", "./*/*.ts", "./*/src/*.ts", "./prune/tests/*.ts"],
+  "exclude": ["node_modules", "smart-compact/vitest.config.ts"]
 }

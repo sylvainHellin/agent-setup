@@ -7,8 +7,8 @@
  *   - Windows Terminal -> PowerShell toast
  *   - other  -> OSC 777 (Ghostty, iTerm2, WezTerm)
  *
- * A bell (\x07) is always emitted so tmux `monitor-activity` / `monitor-bell`
- * pick up the event regardless of the terminal in use.
+ * A bell (\x07) is always emitted so any bell-based watcher picks up the
+ * event regardless of the terminal in use.
  *
  * Used by:
  *   - notify.ts          -> on `agent_end` (agent finished its turn)
@@ -60,7 +60,8 @@ function sendBell(): void {
 }
 
 // Run mode recorded by notify.ts on session_start. Kept on globalThis because
-// pi loads each extension's copy of this module separately (see herdr-bus.ts).
+// pi loads each extension's copy of this module separately, so module-level
+// state would not be shared between extensions.
 const MODE_KEY = "__piNotifyMode";
 
 // Once a TUI session has claimed the process, later non-TUI sessions leave the
@@ -82,14 +83,14 @@ function isTui(): boolean {
 
 /**
  * Send a notification via the best channel for the current platform / terminal.
- * Always emits a bell first so tmux monitor-bell / monitor-activity reacts.
- * Does nothing outside the TUI (print, JSON, RPC modes).
+ * Always emits a bell first. Does nothing outside the TUI (print, JSON, RPC
+ * modes).
  *
- * Inside herdr (HERDR_ENV=1) the desktop toast is suppressed: herdr already
- * posts its own focus-aware system toast off the pane "blocked" / "done" state
- * (raised via shared/herdr-bus and the herdr-agent-state integration). Posting
- * our own terminal-notifier toast on top produced a duplicate notification.
- * The bell still fires so any bell-based watcher keeps working.
+ * Inside the Herdr app (HC_TERMINAL_ID set) the desktop toast is suppressed:
+ * the app posts its own toast when an agent turns "done" or "blocked", off the
+ * status pi reports natively through OSC 7501. Posting our own
+ * terminal-notifier toast on top would duplicate it. The bell still fires so
+ * any bell-based watcher keeps working.
  */
 export function notify(title: string, body: string): void {
 	// Print, JSON and RPC modes own stdout: no bell, no OSC, no toast.
@@ -97,7 +98,7 @@ export function notify(title: string, body: string): void {
 
 	sendBell();
 
-	if (process.env.HERDR_ENV === "1") return;
+	if (process.env.HC_TERMINAL_ID) return;
 
 	if (process.platform === "darwin") {
 		notifyMacOS(title, body);

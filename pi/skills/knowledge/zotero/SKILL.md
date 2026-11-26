@@ -26,18 +26,22 @@ If `zot` itself is missing, [FALLBACK.md](FALLBACK.md) has direct REST access vi
 |---|---|
 | Find papers by meaning, works offline | `zot search "query"`, with `--rerank` when precision matters |
 | Find papers by keyword, guaranteed current | `zot find "query"` |
+| Find papers not yet in the library, or chain citations | `zot discover "query"` (`--semantic`, `--cited-by REF`, `--references REF`, `--not-in-library`); confirm a negative in a bibliographic database such as Scopus or Web of Science |
+| Highlight a passage in a PDF (an agent's first pass gets its own comment prefix, colour and tag: `--comment "Agent: ..." --color "#a28ae5" --tag agent-first-pass`) | `zot annotate KEY --from "..." --to "..."` |
 | Metadata, PDF path, or stored text of a known item | `zot get KEY`, `zot pdf KEY`, `zot fulltext KEY` |
 | Valid filter values, before filtering on them | `zot tags`, `zot authors` |
-| Add a paper by DOI, arXiv id, ISBN, PMID, or PDF | `zot add` |
+| Add a paper by DOI, arXiv id, ISBN, PMID, PMCID, web page URL, or PDF | `zot add` |
 | Render a bibliography (BibTeX, RIS, CSL JSON) | `zot export`, by key, `--collection`, or `zot search --export` |
 | See how the library is organised, or file items | `zot collections`, `zot unfiled`, `zot edit --add-collection` |
 | Decide *which* collection or tag an item gets | [filing.md](filing.md) |
 | Add a standard (DIN, ISO, EN) | Not `zot add`; see [standards.md](standards.md) |
-| Fix metadata, attach a file, trash an item | `zot edit KEY`, `zot attach KEY FILE`, `zot rm KEY` |
+| Fix metadata, attach a file, write a Markdown note, trash an item | `zot edit KEY`, `zot attach KEY FILE`, `zot note KEY --file F.md`, `zot rm KEY` |
 | Create or delete a collection | `zot collections --create NAME`, `zot collections --rm REF` |
 | Refresh the index, or find out why an item is missing | `zot index`, `zot index --status`, `zot index issues` |
 
 `--json` works on every command, for piping into `jq`.
+
+A figure or claim goes into a manuscript under a citation only after reading the full cited work and noting the page: an abstract, a press release or another paper's summary may serve to pick candidates, but figures passed on second-hand have proved misattributed or loosely paraphrased more often than not.
 
 ## What `--help` will not tell you
 

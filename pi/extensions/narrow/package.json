@@ -1,0 +1,14 @@
+{
+  "name": "pi-extension-narrow",
+  "private": true,
+  "type": "module",
+  "description": "Compact transcript below 60 terminal columns: no thinking, tables as lists, tool calls cut to two lines, results hidden unless failed or expanded.",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec tests/*.test.ts"
+  }
+}

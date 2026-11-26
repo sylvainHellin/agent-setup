@@ -6,20 +6,24 @@ export const SMART_COMPACT_HANDOFF_ITEMS = [
   "Current task / atomic stopping point",
   "Progress completed",
   "Decisions / rationale",
+  "Dead ends",
   "Files and artifacts",
   "Validation",
   "Risks / blockers",
   "Next steps",
+  "Next command",
 ];
 
 export const SMART_COMPACT_HANDOFF_GUIDANCE = [
   "progress/current task state and where the current atomic task stopped",
   "progress completed",
   "decisions made and important rationale",
+  "dead ends tried and abandoned, with why, so they are not retried",
   "relevant files and saved artifacts",
   "validation status, including tests or checks run and any not run",
   "remaining risks or blockers",
   "concrete next steps for the continuation",
+  "the exact next command or action to run",
 ].join("; ");
 
 /**
@@ -218,6 +222,43 @@ function buildPruneLine(prunedTokens: number, boundaryTokens: number): string {
     `A prune would bring this context to about ${formatTokens(prunedTokens)} tokens (${share}% of the boundary): it drops thinking, cuts tool calls and results to pointers into this session file and keeps every message, so it keeps more detail than a handoff and is the recommended action here instead of \`smart_compact\`.`,
     "`prune` is active and callable even though it is not in your tool list: at the next clean stopping point, call `prune({})` alone, then keep working on the task; it takes effect from the next request and does not end the turn.",
   ].join(" ");
+}
+
+export interface AutoPruneFallbackInput {
+  /** Context when the automatic prune ran. */
+  tokensBefore?: number | null;
+  /** What the prune left (prune/src/auto.ts estimate); undefined when it found nothing worth cutting. */
+  tokensAfter?: number;
+}
+
+/**
+ * Sent once the automatic prune (prune/src/auto.ts) stops paying: it left
+ * more than its fallback share, or found nothing worth cutting. The automatic
+ * prune replaces the boundary advisory, so this is the first time the model
+ * hears about compaction and it carries the band-0 rubric and template.
+ * Starts with a steering prefix, so the context filter neutralizes it once a
+ * compaction postdates it.
+ */
+export function buildAutoPruneFallbackPrompt({ tokensBefore, tokensAfter }: AutoPruneFallbackInput): string {
+  const before = typeof tokensBefore === "number" && tokensBefore > 0 ? `about ${formatTokens(tokensBefore)}` : "its size";
+  const outcome =
+    typeof tokensAfter === "number"
+      ? `An automatic prune just took the context from ${before} to about ${formatTokens(tokensAfter)} tokens, more than a prune should leave, so a further prune would gain little.`
+      : `An automatic prune found nothing worth cutting at ${before} tokens: what is left is recent work and earlier pruned history.`;
+  return joinLines([
+    "Smart compaction advisory: the automatic prune no longer frees enough context.",
+    outcome,
+    "Compacting with a handoff is the recommended action at the next clean stopping point; until then keep working.",
+    ...AUTO_RUBRIC_LINES,
+    ARTIFACT_LINE,
+    "When you do compact, call `smart_compact({ handoff })` with a concise handoff covering progress, stopping point, decisions, files/artifacts, validation, risks, and next steps.",
+    HANDOFF_BREVITY_LINE,
+    HANDOFF_BREAK_EVEN_LINE,
+    `Soft handoff template when helpful:\n${SMART_COMPACT_HANDOFF_TEMPLATE}`,
+    DURABLE_COPY_LINE,
+    FINAL_ACTION_LINE,
+    CALLABLE_LINE,
+  ]);
 }
 
 export function buildManualSmartCompactRequestPrompt(): string {

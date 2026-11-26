@@ -53,10 +53,10 @@ const LAYOUT: { left: Groups; right: Groups; splitLeft: number; splitRight: numb
 	splitRight: 1,
 };
 
-const GROUP_SEP = " \u2022 "; // bullet, as tuios and Crush separate details
+const GROUP_SEP = " \u2022 "; // bullet, as Crush separates details
 
 /** Commands that can move HEAD or restage, and so invalidate the git segment. */
-const GIT_MUTATING = /\bgit\s+(checkout|switch|branch|merge|rebase|pull|reset|worktree|stash|add|commit)/;
+const GIT_MUTATING = /\bgit\s+(checkout|switch|branch|merge|rebase|pull|reset|worktree|stash|add|commit)|\bwt\s+(switch|merge|remove|step)/;
 
 export default function footerExtension(pi: ExtensionAPI): void {
 	let currentCtx: ExtensionContext | null = null;

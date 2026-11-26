@@ -1,6 +1,6 @@
 # `plane` CLI: what `--help` will not tell you
 
-The most frequent footguns (`--label` and `--assignee` replace the set, `--desc-md` takes stdin, `jq` over `python3 -c`) sit in `SKILL.md`; this file holds the rest.
+The most frequent footguns (`--label` and `--assignee` replace the set, `--desc-md` takes text and `--desc-file` a path, `jq` over `python3 -c`) sit in `SKILL.md`; this file holds the rest.
 Raw endpoints for anything the CLI lacks: `api.md`.
 
 ## Instance and auth
@@ -21,8 +21,10 @@ Raw endpoints for anything the CLI lacks: `api.md`.
 
 ## Descriptions, comments, attachments
 
-- `plane issue update --desc-md` replaces the whole description, since Plane has no append, so carry over any existing text you want to keep.
+- `plane issue update --desc-md` or `--desc-file` replaces the whole description, since Plane has no append, so carry over any existing text you want to keep.
 - Comments take markdown on the way in, so a follow-up usually belongs in `plane issue comment` rather than in an edited description.
+- The comment text is text, never a path: post a file with `plane issue comment PROJ-12 --file /tmp/comment.md`, since a lone path as the text is refused.
+- `plane issue comments PROJ-12` reads every comment back, oldest first, with time, author and the body as plain text.
 - `plane issue attach` is not transactional.
   Each file is an independent upload, reported as it lands, and a failure halfway names the ones already attached, so retry only the files still missing; re-running the whole list attaches the earlier ones twice.
 

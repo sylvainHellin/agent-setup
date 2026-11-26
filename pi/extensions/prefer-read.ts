@@ -8,7 +8,10 @@
  *
  * Left alone: anything with a pipe or heredoc (`cat F | jq`, `cat > F <<EOF`),
  * redirections, regex `sed` ranges, `tail -f`, `$VAR` paths, and commands run
- * remotely (`ssh host cat F`), since `read` cannot do those.
+ * remotely (`ssh host cat F`, `ssh host 'cd D && tail -40 F'`), since `read`
+ * cannot do those. The quoted remote command of an `ssh` call is dropped before
+ * the check, so its `;` and `&&` do not split it into local-looking segments;
+ * a local read chained after the `ssh` call is still blocked.
  *
  * The block reason tells the agent how to do it with `read`, so it retries in
  * the same turn. Before this hook, about one bash call in six was such a read,
@@ -34,9 +37,14 @@ const REASON =
 	"Read several files with parallel `read` calls, or one codemode script for many. " +
 	"Run any remaining non-read part of the command (rg, git, ...) as its own bash call.";
 
+// `ssh <host> '<remote command>'`: the quoted argument, with backslash escapes
+// inside it, runs on the other machine.
+const SSH_REMOTE = /\bssh\b[^'"\n;&|]*?(['"])(?:\\.|(?!\1)[\s\S])*\1/g;
+
 export function hasFileRead(command: string): boolean {
 	if (command.includes("<<") || /(^|[^|])\|([^|]|$)/.test(command)) return false;
 	return command
+		.replace(SSH_REMOTE, "ssh")
 		.split(/\s*(?:&&|;|\n)\s*/)
 		.map((s) => s.trim())
 		.some((segment) => READ_SEGMENTS.some((re) => re.test(segment)));

@@ -8,6 +8,7 @@ import { SMART_COMPACT_INJECTED_PREFIXES } from "../../smart-compact/src/prompts
 import {
 	type BranchEntry,
 	collectCommitHashes,
+	headOf,
 	NOTICE_TAG,
 	NOTICE_TYPE,
 	pruneBranch,
@@ -233,6 +234,32 @@ describe("re-pruning a pruned session", () => {
 		assert.match(res.notice.content, /- 01a0d81a: .*01a0d81a-5d5f\.jsonl \(parent\)\n- 01a0ce92: \/tmp\/s\/2026-09-23T14-01-52-950Z_01a0ce92-a835\.jsonl\n/);
 		assert.match(res.notice.content, /\[truncated, entry <entryId> in <sessionId>\]/);
 		assert.doesNotMatch(res.notice.content, /toolCallId/);
+	});
+});
+
+describe("cuts through astral characters", () => {
+	// "a" shifts the sextant pairs so every cut point lands between a high and a low surrogate.
+	const text = `a${"\u{1FB1E}".repeat(300)}`;
+	const odd: BranchEntry[] = [
+		assistant("a1", [
+			{ type: "toolCall", id: "t1", name: "write", arguments: { path: "/x", content: text } },
+			{ type: "toolCall", id: "t2", name: "bash", arguments: { command: `echo ${text}` } },
+		]),
+		msg("r1", { role: "toolResult", toolCallId: "t1", toolName: "write", content: [{ type: "text", text }], timestamp: 2 }),
+	];
+	const res = pruneBranch(odd, { parentPath: PARENT });
+	const messages = res.items.map((i) => (i as { message: Record<string, any> }).message);
+
+	it("never leaves a lone surrogate in a result, an argument or a command", () => {
+		const [write, bash] = messages[0].content;
+		for (const s of [messages[1].content[0].text, write.arguments.content, bash.arguments.command]) {
+			assert.ok(s.isWellFormed(), JSON.stringify(s.slice(0, 40)));
+		}
+	});
+
+	it("counts the units it removed after backing off a pair", () => {
+		assert.equal(headOf(text, 200).length, 199);
+		assert.equal(messages[1].content[0].text, `${headOf(text, 200)}… [pruned: ${text.length - 199} chars, entry r1 in 01a0d81a]`);
 	});
 });
 

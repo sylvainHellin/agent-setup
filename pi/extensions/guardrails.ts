@@ -100,9 +100,10 @@ const TIMEOUT_REASON =
 	"carry on with any work that does not depend on it, then end your turn by telling the user the exact " +
 	"command still waiting for their approval.";
 
-// Notifications (bell + desktop toast, or herdr's focus-aware toast inside
-// herdr) are fired by withQuietSpinner -> notifyInputNeeded on entry; the
-// toolName passed below becomes the notification body.
+// Notifications (bell + desktop toast; inside the Herdr app the app's own toast
+// replaces ours) are fired by withQuietSpinner -> notifyInputNeeded on entry;
+// the toolName passed below becomes the notification body. pi reports the
+// select() prompt as blocked natively, with the prompt as the message.
 
 // Tier 1, hard block: bare pip/pip3 outside uv context.
 // Negative lookbehind excludes "uv pip install" etc.
@@ -150,9 +151,10 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
 	/\bwipefs\s+-[aA]\s+\//,
 	/\bshred\s+/,
 	// macOS disk management: any diskutil verb except read-only inspection
-	// (list, info, activity). Catches eraseDisk, partitionDisk, reformat,
-	// zeroDisk, apfs deleteContainer, etc. that can wipe a drive.
-	/\bdiskutil\s+(?!(list|info|activity)\b)\S+/i,
+	// (list, info, activity, and the apfs list* family such as apfs listUsers).
+	// Catches eraseDisk, partitionDisk, reformat, zeroDisk, apfs deleteContainer,
+	// etc. that can wipe a drive.
+	/\bdiskutil\s+(?!(list|info|activity)\b|apfs\s+list\w*\b)\S+/i,
 	// macOS volume erase/reformat siblings of diskutil/mkfs.
 	/\basr\s+(restore|erase)\b/i,
 	/\bnewfs_(apfs|hfs)\b/i,
@@ -174,6 +176,9 @@ const DESTRUCTIVE_PATTERNS: RegExp[] = [
 	/\baws\s+s3\s+rb\b/i,
 	// Remote history rewrite (--force also matches --force-with-lease).
 	/\bgit\s+push\b[^;&|]*(--force|-f)\b/i,
+	// Worktrunk removal that discards uncommitted work (-f, --force) or deletes an
+	// unmerged branch (-D, --force-delete); a plain `wt remove` refuses both.
+	/\bwt\s+remove\b[^;&|]*(\s-[a-zA-Z]*[fD]|--force)/,
 	// crontab -r wipes the entire crontab, one key away from crontab -e.
 	/\bcrontab\s+-[a-z]*r[a-z]*\b/i,
 ];

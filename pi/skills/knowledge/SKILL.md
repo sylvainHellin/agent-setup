@@ -6,6 +6,7 @@ description: "Load before any search, read or write in the Obsidian vault, whene
 
 Manage the user's Obsidian vault (`<your vault>`) from any working directory.
 For any paper, reference, citation or bibliography query and for Zotero writes (add by DOI/arXiv/ISBN/PMID/PDF, fix metadata, file into collections, export BibTeX), read `zotero/SKILL.md`; paper notes stay here (`paper-digests.md`).
+When the user wants to learn or understand something (a concept, a method, a paper, a codebase), the `tutor` skill from the agent-pages repo teaches it before any note is written.
 
 ## Reading
 

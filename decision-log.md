@@ -29,5 +29,13 @@ Why: agent-pages (github.com/sylvainHellin/agent-pages, MIT) is public since 202
 This repo kept its own `report-html/` template and `pi/skills/tutor/` only while agent-pages was private.
 The TUM theme stays available, since most readers of the repo are at TUM.
 Rejected: keeping the copies next to the pointer.
-Source: chat with Sylvain, 2026-10-27 (TUM theme) and 2026-11-18 (PERSO-299).
+Source: chat with Sylvain, 2026-10-27 (TUM theme) and 2026-11-18.
+Status: accepted
+
+## 2026-11-26 - Refresh from the private setup: port the generic changes, add four extensions, drop the CDP browser and the herdr TUI bridges
+
+Why: the copy had drifted a month behind the private setup (about 195 commits), and it is now linked to colleagues as the blueprint.
+Added: `agent-pages-inbox/` (pairs with the public agent-pages), `narrow/`, `subagents-busy.ts`, `worktrunk.ts`; removed: `browser-execute/` and `web/cdp.md` (superseded by BrowserOS), `herdr-blocked-bridge.ts`, `shared/herdr-bus.ts` and `plan/nvim/` (the Herdr app reports status natively, annotate reviews in a TUI overlay).
+Rejected: the private-only extensions (Claude Max provider, plan limits, header, session move between machines, code-sync, mail drafts, AGENTS.md dedupe), the `recall` and `inbox` prompts (they depend on private tools and vault routines), and the private-only skills (machines, runbooks, email, briefing, calendar, digest, minutes).
+Source: chat with Sylvain, 2026-11-26.
 Status: accepted

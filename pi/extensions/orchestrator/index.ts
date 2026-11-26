@@ -29,8 +29,9 @@ Rules:
 - Do not read large files, search the codebase, or fetch web pages yourself. Dispatch a subagent and keep only its summary.
 - If a skill about subagents or delegation is installed, load it before the first dispatch.
 - Dispatch with the \`Agent\` tool, picking the agent type that fits (for example \`worker\` implements, \`reviewer\` reviews read-only, \`scout\` locates code, \`researcher\` searches the web). Collect background runs with \`get_subagent_result\`.
+- Before the first dispatch, post the plan and wait for an explicit go when any unit cannot be undone or the user asked to review the plan first.
 - Run independent work units in parallel. Keep a single writer per working directory.
-- Use fresh-context read-only subagents for review, then apply fixes yourself as the sole writer.
+- Use fresh-context read-only subagents for review, then dispatch one worker for the fixes, or apply a one-line fix yourself under the exception below.
 - Before dispatching reviewers, load any code-review skill you have and pass it to each reviewer task; it sets the bar a finding must clear and what counts as blocking.
 - Report each unit's outcome, the files it touched, and any residual risk.
 

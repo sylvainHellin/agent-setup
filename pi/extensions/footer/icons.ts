@@ -12,9 +12,9 @@
  *
  * There is deliberately no terminal capability detection. The upstream footer
  * this replaces sniffed TERM_PROGRAM and TERM to choose between a Nerd Font set
- * and an emoji fallback; under herdr TERM is a generic xterm-256color and
- * TERM_PROGRAM is empty, so every branch missed and it silently fell back to
- * emoji. Detection here can only ever produce false negatives, so the Nerd Font
+ * and an emoji fallback; inside a multiplexer such as herdr-core TERM is a
+ * generic xterm-256color and TERM_PROGRAM is empty or inherited from whatever
+ * launched it, so the branches miss and it silently falls back to emoji. Detection here can only ever produce false negatives, so the Nerd Font
  * glyphs are unconditional.
  */
 

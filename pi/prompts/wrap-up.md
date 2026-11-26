@@ -2,7 +2,7 @@
 description: End-of-session wrap-up; clean up, bring the project docs and the task tracker to the current state, capture knowledge, write a handoff
 argument-hint: "[notes]"
 ---
-Let's finish up for today.
+Let's wrap up for today.
 Before we close this session, clean up after yourself, bring every document that describes the project up to its current state, capture what is worth keeping, and write a handoff so the work resumes next time without losing anything.
 
 ## Notes
@@ -11,6 +11,7 @@ $@
 ## 1. Clean up
 
 - Stop the multiplexer tabs, dev servers and watchers this session started, unless they are meant to keep running; name the ones you leave up.
+- Close the agent browser tabs (BrowserOS or similar) this session opened, since the browser is shared with other sessions.
 - Remove git worktrees and branches created during this session once their work is merged or abandoned.
 - Leave `/tmp` alone.
 
@@ -87,6 +88,9 @@ last_updated: YYYY-MM-DD
 ## Learnings
 {Patterns, root causes and the pitfalls encountered, with file paths.}
 
+## Dead Ends
+{Approaches tried and abandoned, each with why, so the next session does not retry them. Blank if none.}
+
 ## Open Questions
 {What is still undecided or unknown, and who can answer it.}
 
@@ -95,6 +99,9 @@ last_updated: YYYY-MM-DD
 
 ## Action Items & Next Steps
 {What the next session does first, in order.}
+
+## Next Command
+{The exact command or action that starts the next session.}
 
 ## Other Notes
 {Anything else the next session needs: where relevant code or documents live.}
@@ -114,4 +121,4 @@ Close with the reply format of the `writing` skill, and include:
 - the tasks closed, updated or created
 - the processes left running
 - the trivial tool fixes made in step 3, one line each, and each other tool defect with its evidence and proposed fix, awaiting the choice between fixing now and a task
-- each instruction candidate from step 3 with its evidence in one line, the exact target file path, the exact text to insert with enough surrounding context to place it, one line on why that surface and not the next one up, and anything it replaces; then stop and wait for approval
+- each instruction candidate from step 3, led by the exact text to insert, followed by the exact target file path with enough surrounding context to place it, its evidence in one line, one line on why that surface and not the next one up, and anything it replaces; then stop and wait for approval

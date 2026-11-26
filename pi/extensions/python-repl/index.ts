@@ -26,7 +26,7 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
@@ -61,11 +61,11 @@ const BRIDGE = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge.p
 const parameters = Type.Object({
   code: Type.String({
     description:
-      "Python source for the persistent IPython kernel. The value of the last expression is returned; print() for anything else. IPython syntax works (`!cmd`, `%timeit`).",
+      "Python source; the last expression's value is returned. IPython syntax works.",
   }),
   timeout: Type.Optional(
     Type.Number({
-      description: `Seconds before the cell is interrupted (default ${DEFAULT_TIMEOUT_S}, max ${MAX_TIMEOUT_S}). Variables survive an interrupt.`,
+      description: `Seconds before interrupt (default ${DEFAULT_TIMEOUT_S}, max ${MAX_TIMEOUT_S}); variables survive.`,
     }),
   ),
 });
@@ -109,11 +109,11 @@ class Kernel {
   pid: number | null = null;
   exited = false;
 
-  constructor(cwd: string) {
+  constructor(cwd: string, env: NodeJS.ProcessEnv) {
     const args = ["run", "--quiet", "--no-project", "--python", PYTHON_VERSION];
     for (const lib of LIBRARIES) args.push("--with", lib);
     args.push("python", BRIDGE);
-    this.proc = spawn("uv", args, { cwd, stdio: ["pipe", "pipe", "pipe"] });
+    this.proc = spawn("uv", args, { cwd, env, stdio: ["pipe", "pipe", "pipe"] });
 
     this.proc.stderr!.on("data", (chunk: Buffer) => {
       this.stderrTail = (this.stderrTail + chunk.toString()).slice(-4000);
@@ -233,12 +233,19 @@ export default function pythonReplExtension(pi: ExtensionAPI): void {
   // Notice to prepend to the next result when the kernel is not the one earlier calls used.
   let notice: string | null = null;
 
-  const getKernel = async (cwd: string) => {
+  const getKernel = async (ctx: ExtensionContext) => {
     if (kernel?.exited) {
       kernel = null;
       notice = LOST_NOTICE;
     }
-    if (!kernel) kernel = new Kernel(cwd);
+    if (!kernel) {
+      // Same session variables as the bash tool, so CLIs such as agent-pages find the session.
+      // A kernel never outlives its session (session_shutdown stops it), so the id stays valid.
+      const env: NodeJS.ProcessEnv = { ...process.env, PI_SESSION_ID: ctx.sessionManager.getSessionId() };
+      const sessionFile = ctx.sessionManager.getSessionFile();
+      if (sessionFile) env.PI_SESSION_FILE = sessionFile;
+      kernel = new Kernel(ctx.cwd, env);
+    }
     const k = kernel;
     try {
       await k.ready;
@@ -260,12 +267,10 @@ export default function pythonReplExtension(pi: ExtensionAPI): void {
     name: TOOL,
     label: "Python",
     description: [
-      "Run Python in a persistent IPython kernel that lives for the whole session, started in the session's working directory.",
-      "Variables, imports and loaded data persist between calls: load data once, then explore it in small follow-up cells.",
-      "Preloaded: `pl` (polars), `pd` (pandas), `np` (numpy), `duckdb`; also installed: pyarrow, openpyxl, matplotlib (figures come back as images), pyyaml, rdflib.",
-      "duckdb queries JSON/JSONL/CSV/Parquet/xlsx files directly: duckdb.sql(\"select ... from read_json_auto('x.jsonl')\").pl().",
-      "The library set is fixed; for anything else use `uv run --with <pkg>` in bash.",
-      `Output is truncated to the last ${DEFAULT_MAX_LINES} lines or ${formatSize(DEFAULT_MAX_BYTES)}; the full text is then saved to a file.`,
+      "Run Python in a persistent IPython kernel started in the working directory; variables and loaded data survive between calls.",
+      "Preloaded: `pl` (polars), `pd`, `np`, `duckdb` (queries JSON/CSV/Parquet/xlsx files directly); also pyarrow, openpyxl, matplotlib (figures return as images), pyyaml, rdflib.",
+      "Fixed library set: anything else goes through `uv run --with <pkg>` in bash.",
+      `Output past ${DEFAULT_MAX_LINES} lines or ${formatSize(DEFAULT_MAX_BYTES)} is truncated and saved to a file.`,
     ].join(" "),
     parameters,
     outputSchema,
@@ -290,7 +295,7 @@ export default function pythonReplExtension(pi: ExtensionAPI): void {
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       if (signal?.aborted) throw new Error("aborted");
       const timeoutS = Math.min(Math.max(params.timeout ?? DEFAULT_TIMEOUT_S, 1), MAX_TIMEOUT_S);
-      const k = await getKernel(ctx.cwd);
+      const k = await getKernel(ctx);
       const notices: string[] = [];
       if (notice) {
         notices.push(notice);

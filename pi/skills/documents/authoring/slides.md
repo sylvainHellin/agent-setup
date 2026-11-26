@@ -1,6 +1,6 @@
 # Slides: cross-cutting craft
 
-Everything here applies to every Typst deck regardless of theme.
+The authoring guidelines below apply to every deck, including a PowerPoint deck edited for someone else: keep the slide to the anchor and append what the speaker says to that slide's notes, below the owner's notes; the rest of this file applies to Typst decks.
 Each theme's template directory points at its CI file for the brand and carries the gotchas the CI file does not.
 
 Templates are self-contained: copy the `.typ` file (or the whole directory) for each new deck, duplicate or delete slides as needed.
@@ -11,14 +11,21 @@ Create a deck by copying the template file itself, never by cross-tree `#import`
 Read one of the user's finished decks before drafting, if they keep a folder of them (`<your presentations folder>`).
 
 - Title names the topic as a noun phrase, subtitle carries the claim: `title: [Context Rot]` with `subtitle: [The fuller the context, the worse the performance.]`. Writing the claim as the title is the most common miss.
-- A subtitle or takeaway line appears only when it adds a fact, a claim or a question the body lacks; otherwise leave it out. Filler like `Updates since the last meeting` or `Please: share the posts` gets cut in review.
+- A slide holds only the minimum the speaker needs as an anchor for the story; a deck meant to be read without a presenter becomes a separate fact sheet, not a denser deck.
+- A subtitle, takeaway or card subline appears only when it adds a fact, a claim or a question the body lacks; otherwise leave it out. Filler like `Updates since the last meeting` or `Please: share the posts` gets cut in review.
+  It states that fact plainly, never as an aphorism, a slogan or a mirrored pair: `Compaction is a policy, and here the policy is an editable file.`, `Understand to participate, not only to verify` and `Ten minutes, with a page the agent writes for you.` were all cut as slop.
+  Product copy that stacks benefits or pairs noun phrases is slop too: `with no migration and value from the first day` and `An index of every document, and answers that cite them` were cut; say what the product does in one plain sentence, as in `The tool connects to the software the firm already uses, so nobody enters the data twice.`
 - Every borrowed number or figure carries a small grey italic source line on the slide itself.
 - Open on a concrete artifact and a real question rather than a concept: show the thing, ask what the audience would ask, then show why the obvious approach fails.
 - Thread one running example or one phrase through the whole talk.
 - Reveal a dense slide one step at a time by duplicating the slide call, one PDF page per click, with `hide()` holding the layout. No animation library.
 - Structure: cover, agenda, one numbered `slide-section` divider per section, closing.
 - Ask for the time budget before building. Logical slides are what costs time; build pages are free.
+- Wording the user wrote or rewrote in a deck is deliberate: a reviewer's style finding on it goes to the user as a suggestion, and only typos and factual errors get fixed without asking.
+- Settle the flow before any slide exists: a numbered outline, one line per slide with its title and what it does or holds, which the user reorders and cuts; wording, template and figures come only after the user signs off the order.
 - One focal point per slide, no dense text, and never override theme styling inline.
+- One visual identity across the deck: one theme (never alternate dark and light pages), one card or column style with only the accent colour varying, and no single item of a set highlighted.
+- Items side by side get equal line counts and the subtitle stays on one line: cut the copy rather than shrink the type, and never place an image with a white background on a tinted page.
 - Build one slide at a time and show it before moving on.
 
 ## Speaker notes (`notes:` convention)

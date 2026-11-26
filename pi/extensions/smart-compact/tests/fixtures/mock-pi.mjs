@@ -23,6 +23,7 @@ export function createMockPi(options = {}) {
     notifications: [],
     compactCalls: [],
     replacementSessionCalls: [],
+    busListeners: new Map(),
   };
 
   const defaultCwd = options.cwd ?? MOCK_DEFAULT_CWD;
@@ -33,6 +34,18 @@ export function createMockPi(options = {}) {
     },
     registerTool(definition) {
       state.tools.set(definition?.name, definition);
+    },
+    // pi's inter-extension bus (`pi.events`): synchronous delivery, as pi's EventEmitter does.
+    events: {
+      on(channel, handler) {
+        const listeners = state.busListeners.get(channel) ?? [];
+        listeners.push(handler);
+        state.busListeners.set(channel, listeners);
+        return () => state.busListeners.set(channel, (state.busListeners.get(channel) ?? []).filter((h) => h !== handler));
+      },
+      emit(channel, data) {
+        for (const handler of state.busListeners.get(channel) ?? []) handler(data);
+      },
     },
     on(eventName, handler) {
       const handlers = state.handlers.get(eventName) ?? [];

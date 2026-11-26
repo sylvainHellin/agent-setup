@@ -125,6 +125,11 @@ Upstream is a single-author package with restricted issue creation, so this is a
    The tool edits the context in place through pi `context_edit` entries (`prune/index.ts`) and does not end the turn, so no continuation is needed; an estimate failure keeps the plain rungs.
 20. The ladder restarts once the context drops back under the boundary.
    Upstream's ladder is one-shot per session, so after a prune the next crossing would skip band 0 and the prune recommendation; `monitorContextUsage` resets the escalation state when usage falls below the boundary.
+21. The automatic prune replaces the advisory, which comes back only as its fallback.
+   Since 21 Nov 2026 the prune extension prunes on its own above 120k (`prune/src/auto.ts`): at once on a cold cache, at a seam on a warm one (turn end, queued user message, commit, test run, text without edits; never right after a read-only step), and at 160k regardless, keeping the latest step and about the last 20k tokens whole.
+   It announces itself per session on `pi.events` (`prune:auto`, contract in `prune/src/auto-config.ts`), and for an announced session `monitorContextUsage` sends no rung: the model sees the prune notice instead.
+   When an automatic prune leaves more than 60k, or finds nothing worth cutting, one fallback advisory (`buildAutoPruneFallbackPrompt`, band-0 rubric and template) asks for a handoff and `smart_compact`, and today's ladder runs again without prune recommendations until a compaction resets it.
+   Events of other sessions are ignored, since subagent children may share the bus; a runtime where the prune extension is missing or `PI_AUTO_PRUNE=0` keeps the ladder exactly as before.
 
 Unchanged from upstream: the pending-handoff lifecycle with expiry on all three failure paths, the monotonic one-shot band ladder, the summary provenance header, the single automatic continuation after compaction, and the fact that nothing touches `compaction.enabled`, `reserveTokens`, or `keepRecentTokens`.
 
@@ -163,7 +168,7 @@ That is inherited from upstream and unfixed here.
 
 ```
 pnpm install
-pnpm test        # vitest, 93 tests against tests/fixtures/mock-pi.mjs
+pnpm test        # vitest, 106 tests against tests/fixtures/mock-pi.mjs
 pnpm typecheck   # tsc against the installed pi types (0.85.1)
 ```
 

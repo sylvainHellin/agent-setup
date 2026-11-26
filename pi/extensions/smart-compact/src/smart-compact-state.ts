@@ -25,16 +25,26 @@ export interface SmartCompactRuntimeState {
   /** Set when the handoff was NOT used as the summary; consumed by session_compact. */
   fallbackSmartCompaction?: FallbackSmartCompactionState;
   nextPendingSmartCompactionId: number;
+  /** Sessions the prune extension announced its automatic prune for (pi.events, prune/src/auto.ts). */
+  autoPruneSessions: Set<string>;
+  /** The session this runtime serves, from session_start and each turn_end. */
+  currentSessionId?: string;
+  /**
+   * The automatic prune stopped paying and the fallback advisory went out:
+   * today's ladder runs again, without prune recommendations, until reset.
+   */
+  autoPruneFallback: boolean;
 }
 
 export function createSmartCompactRuntimeState(): SmartCompactRuntimeState {
-  return { highestEscalationBandSent: -1, nextPendingSmartCompactionId: 1 };
+  return { highestEscalationBandSent: -1, nextPendingSmartCompactionId: 1, autoPruneSessions: new Set(), autoPruneFallback: false };
 }
 
 export function resetEscalationState(state: SmartCompactRuntimeState): void {
   state.highestEscalationBandSent = -1;
   state.activeBoundaryTokens = undefined;
   state.activeIntervalTokens = undefined;
+  state.autoPruneFallback = false;
 }
 
 /**

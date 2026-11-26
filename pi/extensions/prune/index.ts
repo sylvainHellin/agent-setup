@@ -10,14 +10,38 @@
  * `context_edit` entries at the end of the turn, so the next request of the
  * same run is already pruned. See src/inplace.ts.
  *
- * The `context` handler strips thinking from completed turns in batches, so
- * the prompt cache is invalidated once per batch instead of every turn. See
- * src/thinking.ts.
+ * Above 120k tokens the harness also prunes on its own (src/auto.ts): the
+ * `turn_end` handler commits the same in-place edits when the cache is cold,
+ * when the step ended on a seam (turn end, queued user message, commit, test
+ * run, text without edits; never right after a read-only step), or at the
+ * 160k ceiling, leaving the latest step and about the last 20k tokens whole.
+ * The model sees the usual prune notice, smart-compact hears the outcome on
+ * `pi.events` (it holds its advisory back and falls back to it when a prune
+ * leaves over 60k), and each prune appends a line to
+ * ~/.pi/agent/auto-prune.log.jsonl. Subagents get it too, except on their
+ * final answer. `PI_AUTO_PRUNE=0` turns it off.
+ *
+ * The `context` handler strips thinking from completed turns in batches, and
+ * only when that is free: on a cold cache, or on the request right after a
+ * prune, which rewrites the cache anyway. See src/thinking.ts.
  */
 
 import type { ExtensionAPI, ExtensionContext, SessionBoundaryDraft } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
+import {
+	AUTO_PRUNE_EVENT,
+	AUTO_PRUNE_START_TOKENS,
+	type AutoPruneEvent,
+	appendAutoPruneLog,
+	autoPruneEnabled,
+	autoPruneLogLine,
+	decideTrigger,
+	isCacheCold,
+	isReadOnlyStep,
+	planAutoPrune,
+	stepSeam,
+} from "./src/auto.ts";
 import { CHARS_PER_TOKEN, estimateBaseline, MEASURED_ENTRY, tokensAfterPrune } from "./src/estimate.ts";
 import { buildContextEdits, type ContextEditDraft, entriesBeforeCall, type ProjectedEntry } from "./src/inplace.ts";
 import { applyThinkingFrontier, FRONTIER_ENTRY, restoreFrontier, THINKING_BATCH_CHARS } from "./src/thinking.ts";
@@ -43,6 +67,51 @@ const BATCH = Number(process.env.PI_PRUNE_THINKING_BATCH) || THINKING_BATCH_CHAR
 
 type Usage = { input?: number; cacheRead?: number; cacheWrite?: number };
 type Entry = { type: string; customType?: string; details?: unknown };
+type StepMessage = { role: string; content?: unknown; timestamp?: number };
+
+/** Tools whose own flow owns the context: `smart_compact` compacts next, `prune` commits its own edits. */
+const SELF_MANAGED = new Set(["smart_compact", "prune"]);
+
+/**
+ * pi-subagents children carry no env marker. Every child's prompt starts with
+ * `<active_agent name="..."/>` (append and replace mode); only append mode adds
+ * the `<sub_agent_context>` block, so the tag is what catches reviewer, scout,
+ * researcher and recall.
+ */
+function isSubagentSession(ctx: ExtensionContext): boolean {
+	try {
+		return /<active_agent name=|<sub_agent_context>|operating as a sub-agent/.test(ctx.getSystemPrompt());
+	} catch {
+		return false;
+	}
+}
+
+function sessionId(ctx: ExtensionContext): string | undefined {
+	try {
+		return ctx.sessionManager.getSessionId() || undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function callNames(message: StepMessage): string[] {
+	if (!Array.isArray(message.content)) return [];
+	return (message.content as { type?: string; name?: unknown }[]).filter((b) => b.type === "toolCall").map((b) => String(b.name));
+}
+
+/** Latest assistant timestamp among messages, the start of the request that wrote it. */
+function lastAssistantAt(messages: StepMessage[]): number | undefined {
+	for (let i = messages.length - 1; i >= 0; i--) {
+		const m = messages[i];
+		if (m.role === "assistant" && typeof m.timestamp === "number") return m.timestamp;
+	}
+	return undefined;
+}
+
+function latest(...ts: (number | undefined)[]): number | undefined {
+	const known = ts.filter((t): t is number => typeof t === "number" && Number.isFinite(t));
+	return known.length ? Math.max(...known) : undefined;
+}
 
 /**
  * The latest prune notice of this branch, unless a `prune:measured` entry
@@ -147,9 +216,25 @@ async function commitFiles(pi: ExtensionAPI, hashes: string[], dirs: string[]): 
 export default function prune(pi: ExtensionAPI) {
 	let frontier = 0;
 	const pending = new Map<string, PendingPrune>();
+	const auto = autoPruneEnabled();
+	/** When the latest provider request started or ended, for the cache TTL. */
+	let lastRequestAt: number | undefined;
+	/** A prune was committed since the last request, so that request rewrites the cache anyway. */
+	let prunedSinceRequest = false;
+	const emit = (event: AutoPruneEvent) => {
+		try {
+			pi.events?.emit(AUTO_PRUNE_EVENT, event);
+		} catch {
+			// smart-compact listening is optional.
+		}
+	};
 
 	const restore = (ctx: ExtensionContext) => {
 		frontier = restoreFrontier(ctx.sessionManager.getBranch() as never);
+		lastRequestAt = undefined;
+		prunedSinceRequest = false;
+		const id = sessionId(ctx);
+		if (auto && id) emit({ type: "active", sessionId: id });
 	};
 	pi.on("session_start", (_event, ctx) => {
 		pending.clear();
@@ -160,21 +245,118 @@ export default function prune(pi: ExtensionAPI) {
 		restore(ctx);
 	});
 
+	/**
+	 * The automatic prune for the step that just ended, as boundary drafts, or
+	 * undefined to leave the context alone. Runs where the `prune` tool commits,
+	 * so the edits reach the next request the same way.
+	 */
+	async function autoPrune(
+		event: { message?: unknown; messageEntryId?: string; outcome?: string; context?: { pendingMessages?: unknown[] } },
+		ctx: ExtensionContext,
+	): Promise<SessionBoundaryDraft[] | undefined> {
+		const message = event.message as StepMessage | undefined;
+		if (message?.role !== "assistant" || (event.outcome !== undefined && event.outcome !== "completed")) return;
+		const calls = callNames(message);
+		if (calls.some((n) => SELF_MANAGED.has(n))) return;
+		let tokens: number | null | undefined;
+		try {
+			tokens = ctx.getContextUsage()?.tokens;
+		} catch {
+			return;
+		}
+		if (typeof tokens !== "number" || tokens < AUTO_PRUNE_START_TOKENS) return;
+
+		const pendingUser = (event.context?.pendingMessages ?? []).some((m) => (m as { role?: string })?.role === "user");
+		const subagent = isSubagentSession(ctx);
+		// A subagent's last answer is its report: pruning after it only costs.
+		if (subagent && calls.length === 0 && !pendingUser) return;
+		const now = Date.now();
+		const cold = isCacheCold(now, latest(lastRequestAt, message.timestamp));
+		const seam = stepSeam(message as never, { pendingUser });
+		const trigger = decideTrigger({ tokens, cold, seam, readOnly: isReadOnlyStep(message as never) });
+		if (!trigger) return;
+
+		const sessionPath = ctx.sessionManager.getSessionFile();
+		const id = sessionId(ctx);
+		if (!sessionPath || !id) return;
+		const projected = ctx.sessionManager.buildSessionProjection().entries as unknown as ProjectedEntry[];
+		const chain = sessionChain(sessionPath);
+		const opts = { parentPath: sessionPath, sessionChain: chain, callOrigins: callOrigins(chain), inPlace: true };
+		const lastAssistantId = event.messageEntryId ?? "";
+		let plan = planAutoPrune(projected, { lastAssistantId, tokensBefore: tokens, trigger, prune: opts });
+		if (!plan.ok) {
+			emit({ type: "no-gain", sessionId: id, trigger, tokensBefore: tokens, reason: plan.reason });
+			return;
+		}
+		const touched = [...plan.result.notice.details.filesModified, ...plan.result.notice.details.filesRead];
+		const dirs = [ctx.cwd, ...touched.map((f) => dirname(f.replace(/ \(deleted\)$/, "")))];
+		const extraModified = await commitFiles(pi, collectCommitHashes(ctx.sessionManager.getBranch() as BranchEntry[]), dirs);
+		if (extraModified.length) {
+			const again = planAutoPrune(projected, { lastAssistantId, tokensBefore: tokens, trigger, prune: { ...opts, extraModified } });
+			if (again.ok) plan = again;
+		}
+
+		const details: PruneNoticeDetails = {
+			...plan.result.notice.details,
+			tokensBefore: tokens,
+			tokensEstimate: plan.tokensEstimate,
+			inPlace: true,
+		};
+		appendAutoPruneLog(
+			autoPruneLogLine({
+				now,
+				sessionId: id,
+				sessionFile: sessionPath,
+				trigger,
+				seam: trigger === "seam" ? seam : undefined,
+				subagent,
+				tokensBefore: tokens,
+				tokensAfterEstimate: plan.tokensEstimate,
+				edits: plan.edits.length,
+			}),
+		);
+		emit({ type: "pruned", sessionId: id, trigger, tokensBefore: tokens, tokensEstimate: plan.tokensEstimate });
+		if (ctx.hasUI)
+			ctx.ui.notify(
+				`prune: automatic (${trigger === "seam" ? `seam: ${seam}` : trigger}), ${fmtTokens(tokens)} → about ${fmtTokens(plan.tokensEstimate)} tokens over ${plan.edits.length} entries`,
+				"info",
+			);
+		const notice = { type: "custom_message" as const, customType: NOTICE_TYPE, content: plan.result.notice.content, display: true, details };
+		return [...plan.edits, notice] as SessionBoundaryDraft[];
+	}
+
 	// Edits land after the turn's tool results, before pi rebuilds the context
 	// for the next request, so the run goes on with the pruned context.
 	// Every pending prune was prepared in this turn, since each turn_end clears
 	// them; a codemode call (`tools.prune`) carries an id no toolCall block holds.
-	pi.on("turn_end", (_event, ctx) => {
+	pi.on("turn_end", async (event, ctx) => {
 		const p = [...pending.values()].at(-1);
 		pending.clear();
-		if (!p) return;
-		if (ctx.hasUI) ctx.ui.notify(p.summary, "info");
-		// inplace.ts types the replacement loosely to stay free of pi imports.
-		return { entries: [...p.edits, p.notice] as SessionBoundaryDraft[] };
+		if (p) {
+			if (ctx.hasUI) ctx.ui.notify(p.summary, "info");
+			prunedSinceRequest = true;
+			// inplace.ts types the replacement loosely to stay free of pi imports.
+			return { entries: [...p.edits, p.notice] as SessionBoundaryDraft[] };
+		}
+		if (!auto) return;
+		const drafts = await autoPrune(event as never, ctx);
+		if (!drafts) return;
+		prunedSinceRequest = true;
+		const proposed = ((event as { entries?: SessionBoundaryDraft[] }).entries ?? []) as SessionBoundaryDraft[];
+		return { entries: [...proposed, ...drafts] };
 	});
 
+	// The strip breaks the cache from the first stripped message on, so it
+	// advances only when the request rewrites the cache anyway: the cache went
+	// cold, or a prune was committed since the last request. On a warm cache
+	// the stripped prefix stays as it is (batch = Infinity never advances).
 	pi.on("context", (event, ctx) => {
-		const pass = applyThinkingFrontier(event.messages as never[], frontier, BATCH);
+		const now = Date.now();
+		const cold = isCacheCold(now, latest(lastRequestAt, lastAssistantAt(event.messages as StepMessage[])));
+		const free = cold || prunedSinceRequest;
+		prunedSinceRequest = false;
+		lastRequestAt = now;
+		const pass = applyThinkingFrontier(event.messages as never[], frontier, free ? BATCH : Number.POSITIVE_INFINITY);
 		if (pass.advanced) {
 			frontier = pass.frontier;
 			pi.appendEntry(FRONTIER_ENTRY, { ts: frontier });
@@ -186,6 +368,7 @@ export default function prune(pi: ExtensionAPI) {
 	// The first reply in a pruned session carries the real size of the pruned request.
 	pi.on("message_end", (event, ctx) => {
 		const msg = event.message as { role?: string; usage?: Usage };
+		if (msg.role === "assistant") lastRequestAt = Date.now();
 		if (msg.role !== "assistant" || !msg.usage) return;
 		const after = (msg.usage.input ?? 0) + (msg.usage.cacheRead ?? 0) + (msg.usage.cacheWrite ?? 0);
 		if (after === 0) return;
@@ -201,7 +384,7 @@ export default function prune(pi: ExtensionAPI) {
 	pi.registerMessageRenderer<PruneNoticeDetails>(NOTICE_TYPE, (message, options, theme) => {
 		const d = message.details;
 		const head = d
-			? `✂ pruned ${d.inPlace ? "in place" : `from ${basename(d.parentSession)}`}${d.tokensBefore ? ` (${fmtTokens(d.tokensBefore)} tokens)` : ""}: ` +
+			? `✂ pruned ${d.auto ? `automatically (${d.auto})` : d.inPlace ? "in place" : `from ${basename(d.parentSession)}`}${d.tokensBefore ? ` (${fmtTokens(d.tokensBefore)} tokens)` : ""}: ` +
 				`${fmt(d.charsBefore)} → ${fmt(d.charsAfter)} chars, ` +
 				`${d.filesModified.length} files modified, ${d.filesRead.length} read`
 			: "✂ pruned context";

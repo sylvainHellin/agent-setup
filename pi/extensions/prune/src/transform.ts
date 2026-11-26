@@ -72,6 +72,8 @@ export interface PruneOptions {
 	extraModified?: string[];
 	/** The model-called prune edits this session's context instead of copying it; changes the notice wording. */
 	inPlace?: boolean;
+	/** Set by the automatic prune (src/auto.ts): what triggered it, and the tail it left whole, in tokens. */
+	auto?: { trigger: string; tailTokens: number };
 }
 
 export interface PruneResult {
@@ -94,6 +96,8 @@ export interface PruneNoticeDetails {
 	tokensEstimate?: number | null;
 	/** Written by the `prune` tool, which edits the context of the session it runs in. */
 	inPlace?: boolean;
+	/** What triggered an automatic prune (src/auto.ts): "cold", "seam" or "ceiling"; absent for the tool and `/prune`. */
+	auto?: string;
 }
 
 export interface PruneStats {
@@ -155,6 +159,23 @@ interface PointerRef {
 const POINTER_END = /… \[pruned: \d+ chars, entry [\w-]+ in ([^\]]+)\]$/;
 const POINTER_ANY = /… \[pruned: \d+ chars, entry [\w-]+ in [^\]]+\]/g;
 
+/**
+ * The first `n` UTF-16 units of `s`, one fewer when the cut would split a
+ * surrogate pair (emoji, sextant glyphs): a lone surrogate makes the session
+ * JSONL unreadable for jq, which the prune notice's recall command relies on.
+ */
+export function headOf(s: string, n: number): string {
+	const code = s.charCodeAt(n - 1);
+	return s.slice(0, code >= 0xd800 && code <= 0xdbff ? n - 1 : n);
+}
+
+/** The last `n` UTF-16 units of `s`, one fewer when the cut would split a surrogate pair. */
+function tailOf(s: string, n: number): string {
+	const start = s.length - n;
+	const code = s.charCodeAt(start);
+	return s.slice(code >= 0xdc00 && code <= 0xdfff ? start + 1 : start);
+}
+
 function pointer(removed: number, entryId: string, sid: string): string {
 	return `… [pruned: ${removed} chars, entry ${entryId} in ${sid}]`;
 }
@@ -170,7 +191,8 @@ function cutWithPointer(text: string, max: number, entryId: string, ref: Pointer
 		return { text: text.slice(0, m.index) + m[0].replace("in parent session", `in ${ref.legacySid}`), cut: false };
 	}
 	if (text.length <= max) return { text, cut: false };
-	return { text: text.slice(0, max) + pointer(text.length - max, entryId, ref.sid), cut: true };
+	const kept = headOf(text, max);
+	return { text: kept + pointer(text.length - kept.length, entryId, ref.sid), cut: true };
 }
 
 /** Whether a string already ends in an argument mark placed within `max`. */
@@ -183,7 +205,7 @@ function truncateArgs(value: unknown, max: number, hit: { n: number }, mark = ""
 	if (typeof value === "string") {
 		if (value.length <= max || alreadyMarked(value, max)) return value;
 		hit.n++;
-		return `${value.slice(0, max)}… ${mark || "[truncated]"}`;
+		return `${headOf(value, max)}… ${mark || "[truncated]"}`;
 	}
 	if (Array.isArray(value)) return value.map((v) => truncateArgs(v, max, hit, mark));
 	if (value && typeof value === "object") {
@@ -221,7 +243,7 @@ export function shortenCommand(cmd: string, max: number, hit: { n: number }, mar
 	const gap = " … ";
 	const head = Math.ceil((max - gap.length) * 0.6);
 	const tail = max - gap.length - head;
-	return short.slice(0, head) + gap + short.slice(short.length - tail) + tag;
+	return headOf(short, head) + gap + tailOf(short, tail) + tag;
 }
 
 /** A commit hash at the start of a line: `[branch abc1234] msg` (git commit) or `abc1234 msg` (git log --oneline). */
@@ -473,7 +495,7 @@ export function pruneBranch(entries: BranchEntry[], opts: PruneOptions): PruneRe
 	const filesModified = [...new Set([...modified, ...extra])].filter((f) => !deleted.has(f));
 	const modifiedSet = new Set(filesModified.map((f) => f.replace(/ \(deleted\)$/, "")));
 	const filesRead = [...new Set(read)].filter((p) => !modifiedSet.has(p));
-	const content = buildNoticeText(chain, argMax, resultMax, filesModified, filesRead, opts.inPlace ?? false);
+	const content = buildNoticeText(chain, argMax, resultMax, filesModified, filesRead, opts.inPlace ?? false, opts.auto);
 
 	stats.charsAfter = items.reduce((n, item) => n + itemChars(item), 0) + content.length;
 	return {
@@ -489,6 +511,7 @@ export function pruneBranch(entries: BranchEntry[], opts: PruneOptions): PruneRe
 				filesRead,
 				charsBefore: stats.charsBefore,
 				charsAfter: stats.charsAfter,
+				...(opts.auto ? { auto: opts.auto.trigger, inPlace: true } : {}),
 			},
 		},
 		stats,
@@ -502,15 +525,19 @@ function buildNoticeText(
 	modified: string[],
 	read: string[],
 	inPlace: boolean,
+	auto?: { trigger: string; tailTokens: number },
 ): string {
 	const list = (paths: string[]) => (paths.length ? paths.map((f) => `- ${f}`).join("\n") : "- none");
-	const own = inPlace ? " (this session)" : " (parent)";
+	const own = inPlace || auto ? " (this session)" : " (parent)";
 	const sessions = chain.map((f, i) => `- ${sessionShortId(f)}: ${f}${i === 0 ? own : ""}`);
+	const tail = auto ? `${Math.round(auto.tailTokens / 1000)}k` : "";
 	return [
 		`${NOTICE_TAG} This message comes from the prune extension, not from the user.`,
-		inPlace
-			? `The context before the prune call was pruned in place; the full entries stay in this session file, ${chain[0]}.`
-			: `Context was pruned from the parent session ${chain[0]}.`,
+		auto
+			? `The older context was pruned automatically by the harness (${auto.trigger}); your latest step and about the last ${tail} tokens stay whole, the full entries stay in this session file, ${chain[0]}, and nothing is needed from you: continue the task.`
+			: inPlace
+				? `The context before the prune call was pruned in place; the full entries stay in this session file, ${chain[0]}.`
+				: `Context was pruned from the parent session ${chain[0]}.`,
 		`Thinking was removed, tool-call string arguments were cut to ${argMax} chars, and tool results to ${resultMax} chars.`,
 		`A cut result ends in "[pruned: N chars, entry <entryId> in <sessionId>]", a cut tool-call argument in "[truncated, entry <entryId> in <sessionId>]".`,
 		`The session ids map to these files:`,

@@ -2,7 +2,7 @@
   "name": "pi-extension-prune",
   "private": true,
   "type": "module",
-  "description": "/prune and the prune tool: deterministic context pruning into a new session or in place, plus batched thinking strip on the context event.",
+  "description": "/prune, the prune tool and the seam-gated automatic prune: deterministic context pruning into a new session or in place, plus a batched thinking strip when the cache is rewritten anyway.",
   "pi": {
     "extensions": [
       "./index.ts"

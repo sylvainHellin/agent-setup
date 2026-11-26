@@ -1,7 +1,10 @@
 {
   "packages": [
     "npm:pi-vim",
-    "npm:@tintinweb/pi-subagents"
+    {
+      "source": "npm:@tintinweb/pi-subagents",
+      "skills": []
+    }
   ],
   "skills": [
     "~/code/agent-pages/skills"

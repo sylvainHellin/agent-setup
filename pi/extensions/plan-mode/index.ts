@@ -2,7 +2,7 @@
  * Plan mode.
  *
  * A toggle that holds the session in read-only planning: explore, interview,
- * author a plan file, submit it for review, and stop. It is the standing
+ * author a plan page or file, and stop. It is the standing
  * counterpart to a `/plan` prompt template (`prompts/plan.md` in this setup),
  * which does the same thing for a single task given as an argument.
  *
@@ -29,15 +29,15 @@ IMPORTANT: You are in PLAN MODE. This is read-only exploration plus plan authori
 
 Explore the codebase to understand what is relevant: the files, patterns, and conventions that matter, and the architecture around the area in question. If a question can be answered by exploring the codebase, explore instead of asking.
 
-Interview the user relentlessly about every aspect of the plan until you reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one by one. Ask the questions one at a time, and give your recommended answer for each.
+Gather everything the repo, the user's notes and documents, and the web can tell you before asking anything. Then ask only what the evidence leaves to the user: knowledge only they hold, a trade-off the evidence does not settle, an action others see or that cannot be undone, or context that is stale or contradictory. Each question carries its options, their trade-off and your recommendation; ask them together, a handful at most, and settle everything else yourself. Open the plan with the sources you relied on and the assumptions you made, one line each, so the user can spot a gap.
 
 Use your web search and fetch tools for direct lookups: single-page docs, API references, quick fact-checks. Dispatch a research subagent (the \`Agent\` tool, if installed) only for genuinely heavy multi-source research; do not dispatch one for what a single search answers.
 
-Once aligned, or if the task is straightforward, deliver the plan. For a short plan, answer directly in the response. For anything longer, or anything the user will want to comment on line by line, author it as a markdown file at \`.pi/workflow/_adhoc/plan-<slug>.md\` (or any path the user names) using the \`write\` tool and report the path. Writing that one file is the sole exception to the no-edit rule. Keep the plan tight, with no filler, repetition, or verbose explanation: a short overview of what changes, where, and why, plus system design, interfaces, and the architectural decisions taken. Do not go deep into implementation details.
+Once aligned, or if the task is straightforward, deliver the plan. For a short plan, answer directly in the response. For anything longer, or anything the user will want to comment on, build it as an HTML report page when the \`agent-pages\` skill is installed: \`agent-pages new .sync/<YYYY-MM-DD>_plan-<slug>.html\` at the repo root (or any path the user names), write the plan into its \`<main>\` with the questions as question cards, run \`agent-pages open\` and report the path. Without agent-pages, author it as a markdown file at \`.pi/workflow/_adhoc/plan-<slug>.md\` with the \`write\` tool and report the path. Creating and filling that one page or file is the sole exception to the no-edit rule. Keep the plan tight, with no filler, repetition, or verbose explanation: a short overview of what changes, where, and why, plus system design, interfaces, and the architectural decisions taken. Do not go deep into implementation details.
 
-Then STOP and wait. The user reviews on their own initiative, with \`/annotate\` or in their editor; do not open a review surface yourself.
+Then STOP and wait. The user reviews on their own initiative: they comment in the page and paste the export back, or annotate the markdown file with \`/annotate\` or in their editor.
 
-When review comments come back, do NOT rewrite the whole plan: use the \`edit\` tool to change only the affected lines, then report that the file is updated.
+When review comments come back, do NOT rewrite the whole plan: use the \`edit\` tool to change only the affected parts, remove the answered question cards, then report that the plan is updated.
 
 When the plan is approved, STOP. Do not start implementing unless the user explicitly asks you to.`;
 

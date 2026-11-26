@@ -9,8 +9,8 @@ It is meant as an inspiration to adapt and customize, rather than a setup to cop
 
 | Path | What it is |
 |---|---|
-| [`pi/extensions/`](pi/extensions/README.md) | 24 pi extensions: context management without lossy summaries (`prune`, `smart-compact`), a plan and annotate review loop, `/review` and `/diff` with inline comments, an orchestrator mode, a persistent Python tool, guardrails. |
-| [`pi/skills/`](pi/skills/README.md) | Seven generic skills: agents (writing skills and instruction files, subagents), code and code review, writing (avoiding AI tells), documents (Typst and LaTeX, TikZ figures, document parsing), knowledge (Obsidian vault and Zotero), web, task tracking. |
+| [`pi/extensions/`](pi/extensions/README.md) | 26 pi extensions: context management without lossy summaries (`prune` with an automatic mode, `smart-compact`), a plan and annotate review loop, a comment inbox for agent-pages, `/review` and `/diff` with inline comments, an orchestrator mode, a persistent Python tool, guardrails. |
+| [`pi/skills/`](pi/skills/README.md) | Seven generic skills: agents (writing skills and instruction files, subagents), code and code review (tests first, parallel worktrees), writing (avoiding AI tells), documents (Typst and LaTeX, TikZ figures, document parsing), knowledge (Obsidian vault and Zotero), web, task tracking. |
 | [`pi/AGENTS.md`](pi/AGENTS.md), [`pi/SYSTEM.md`](pi/SYSTEM.md) | Global instructions and a persona template, with placeholders for personal details. |
 | [`pi/agents/`](pi/agents/) | Subagent types for `@tintinweb/pi-subagents`: scout, researcher, worker, reviewer. |
 | [`pi/prompts/`](pi/prompts/) | Prompt templates: plan, brainstorm, debug, grill-me, research, handoffs, wrap-up, commit. |
@@ -51,4 +51,4 @@ The `skills` entry in `settings.example.json` already points pi at its skills in
 ## License
 
 MIT, see [`LICENSE`](LICENSE).
-Vendored code keeps its own license: `pi/extensions/smart-compact/` (MIT, fork of dasomji/pi-smart-compact) and `pi/extensions/browser-execute/cdp/` (MIT, from browser-use/browsercode).
+Vendored code keeps its own license: `pi/extensions/smart-compact/` (MIT, fork of dasomji/pi-smart-compact) and `pi/extensions/worktrunk.ts` (MIT or Apache-2.0, fork of the pi plugin that max-sixty/worktrunk installs).

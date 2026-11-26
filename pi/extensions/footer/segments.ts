@@ -13,7 +13,7 @@
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import type { GitStatus } from "./git-status.js";
-import { fg, loadColor, type SemanticColor } from "./theme.js";
+import { CONTEXT_CRITICAL_ABOVE, CONTEXT_WARN_AT, fg, loadColor, type SemanticColor } from "./theme.js";
 import { deEmojify, ICONS } from "./icons.js";
 
 export type SegmentContext = {
@@ -158,7 +158,11 @@ registerSegment("context", (ctx) => {
 	// A figure rather than a bar: the percentage is what decides when to
 	// compact, and the 18-cell bar took a fifth of the row to say the same.
 	if (ctx.contextWindow <= 0) return hidden;
-	const pct = value(ctx, loadColor(ctx.contextPercent, 50, 75), formatPercent(ctx.contextPercent));
+	// Coloured on absolute tokens, not on the percentage: quality degrades past
+	// ~100k whether the window is 200k or 1M, so 11% of 1M can already be orange.
+	const tokens = (ctx.contextPercent / 100) * ctx.contextWindow;
+	const color = loadColor(tokens, CONTEXT_WARN_AT, CONTEXT_CRITICAL_ABOVE);
+	const pct = value(ctx, color, formatPercent(ctx.contextPercent));
 	return { content: `${pct} ${label(ctx, `of ${formatTokens(ctx.contextWindow)}`)}`, visible: true };
 });
 

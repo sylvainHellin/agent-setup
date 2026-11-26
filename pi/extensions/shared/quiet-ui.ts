@@ -12,9 +12,8 @@
  *
  * branch and clears + redraws the entire screen ~12 times per second.
  *
- * Modern native terminals hide this with synchronized output (ESC[?2026h),
- * but tmux is unreliable, so the user sees rapid alternation between the
- * chat history and the custom UI.
+ * Terminals without reliable synchronized output (ESC[?2026h) show this as
+ * rapid alternation between the chat history and the custom UI.
  *
  * `withQuietSpinner()` and `withQuietSpinnerSync()` pause the indicator for
  * the duration of an interactive flow. `Loader.restartAnimation()` skips
@@ -23,18 +22,20 @@
  * `setWorkingIndicator()` with no argument restores the default spinner.
  *
  * Side-effect: every entry into `withQuietSpinner` corresponds to a tool /
- * hook waiting on the user. We fire `notifyInputNeeded()` so tmux's bell and
- * the macOS toast (with Pi.app icon) trigger in mid-turn flows like the
- * questionnaire and the guardrails confirmation, not just on `agent_end`. Pass `notify: false` to opt out.
+ * hook waiting on the user. We fire `notifyInputNeeded()` so the bell and,
+ * outside the Herdr app, the desktop toast trigger in mid-turn flows like the
+ * questionnaire and the guardrails confirmation, not just on `agent_end`.
+ * Pass `notify: false` to opt out.
  *
- * We also flip the herdr pane to "blocked" for the duration (via
- * shared/herdr-bus), so herdr fires its native toast / sound when the pane is
- * not focused. herdr's screen heuristics do not recognize pi's custom select /
- * overlay UIs as a permission prompt, so this is what makes the herdr sidebar
- * show "blocked" while a guardrail or review is waiting. No-ops outside herdr.
+ * Blocked status: pi reports select / confirm / input / editor dialogs as
+ * "blocked" (OSC 7501 program status, which the Herdr app shows in its
+ * sidebar and toasts) on its own, but a `ctx.ui.custom()` component only when
+ * the caller passes `options.blocked`, and only inline (overlays ignore it).
+ * `fn` therefore receives a ready `{ blocked }` options object to hand to
+ * `ctx.ui.custom(factory, dialog)`; its message is `options.blocked.message`,
+ * else `options.toolName`, else "Waiting for input".
  */
 
-import { emitHerdrBlocked } from "./herdr-bus.js";
 import { notifyInputNeeded } from "./notify.js";
 
 interface QuietUI {
@@ -46,29 +47,46 @@ interface QuietCtx {
 	ui: QuietUI;
 }
 
+/** What pi reports while a custom dialog waits (OSC 7501 `blocked` kind and message). */
+export interface BlockedStatus {
+	kind: "permission" | "question" | "auth";
+	message: string;
+}
+
+/** Options to pass to `ctx.ui.custom()` so pi reports the dialog as blocked. */
+export interface BlockedDialogOptions {
+	blocked: BlockedStatus;
+}
+
 export interface QuietSpinnerOptions {
-	/** Send a desktop / tmux notification on entry. Defaults to true. */
+	/** Send a bell / desktop notification on entry. Defaults to true. */
 	notify?: boolean;
 	/** Optional tool name included in the notification body. */
 	toolName?: string;
+	/** Blocked status for a custom dialog; kind defaults to "question". */
+	blocked?: Partial<BlockedStatus>;
 }
 
 export async function withQuietSpinner<T>(
 	ctx: QuietCtx,
-	fn: () => Promise<T>,
+	fn: (dialog: BlockedDialogOptions) => Promise<T>,
 	options: QuietSpinnerOptions = {},
 ): Promise<T> {
-	if (!ctx.hasUI) return fn();
+	const dialog: BlockedDialogOptions = {
+		blocked: {
+			kind: options.blocked?.kind ?? "question",
+			message: options.blocked?.message ?? options.toolName ?? "Waiting for input",
+		},
+	};
+	if (!ctx.hasUI) return fn(dialog);
 	if (options.notify !== false) {
 		notifyInputNeeded(options.toolName);
 	}
-	emitHerdrBlocked(true, options.toolName ?? "waiting for input");
 	ctx.ui.setWorkingIndicator({ frames: [] });
 	try {
-		return await fn();
+		return await fn(dialog);
 	} finally {
-		// Restore the default animated spinner and clear the herdr blocked state.
-		emitHerdrBlocked(false);
+		// Restore the default animated spinner.
 		ctx.ui.setWorkingIndicator();
 	}
 }

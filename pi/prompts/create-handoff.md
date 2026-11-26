@@ -48,11 +48,17 @@ last_updated: [Current date, YYYY-MM-DD]
 ## Learnings
 {Describe important things that you learned - e.g. patterns, root causes of bugs, or other important pieces of information someone that is picking up your work after you should know. Consider listing explicit file paths.}
 
+## Dead Ends
+{Approaches tried and abandoned, each with why it failed, so the next agent does not retry them. Leave blank if none.}
+
 ## Artifacts
 {An exhaustive list of artifacts you produced or updated as filepaths and/or `file:line` references - e.g. paths to feature documents, implementation plans, etc that should be read in order to resume your work.}
 
 ## Action Items & Next Steps
 {A list of action items and next steps for the next agent to accomplish based on your tasks and their statuses}
+
+## Next Command
+{The exact next command or action to run to resume the work}
 
 ## Other Notes
 {Other notes, references, or useful information - e.g. where relevant sections of the codebase are, where relevant documents are, or other important things you learned that you want to pass on but that don't fall into the above categories}

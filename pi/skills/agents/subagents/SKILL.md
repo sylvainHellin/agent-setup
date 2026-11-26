@@ -26,8 +26,11 @@ Call them as normal tool calls, or from codemode as `await tools.Agent({...})`; 
 - Never poll or sleep while a background agent runs; continue with other work until the notification arrives.
 - Never repeat searches or reads you delegated; wait for the agent's result instead.
 - Finished-agent records do not outlive the session or a reconnect; after "Agent not found", the output file named in the dispatch reply still holds the run as JSONL, and `tail -n 1 <file> | jq -r '.message.content[] | select(.type=="text") | .text'` prints the final report.
+- `isolation: "worktree"` checks out a bare `git worktree` under `$TMPDIR` without any ignored file: no local `.gitignore`, `node_modules`, `.env` or build tree.
+  It suits light repos; in a repo set up for Worktrunk (`code` skill, Worktrees), the main session runs `wt switch --create <branch> --no-cd`, briefs the worker with the worktree's absolute path, and merges with `wt -C <path> merge main` after review.
 - A worktree agent's checkout is removed when it finishes and its commits survive on an auto-created branch `pi-agent-<id>` (plus any branch it made); a resumed worktree agent has no files to edit, so follow-up code work is a fresh worktree dispatch that checks out that branch, and the merged branches are deleted only after `git log --cherry-pick --right-only main...<branch>` prints nothing.
-- Two workers that commit to one checkout see each other's uncommitted edits; run them in sequence, or give all but one `isolation: "worktree"`.
+- Two workers that commit to one checkout see each other's uncommitted edits; run them in sequence, or give all but one its own worktree.
+- A worker that ends in an error (Connection error) leaves its edits uncommitted in its checkout and its full transcript, tool calls and results, in the JSONL output file named in the notification; read `git status` and that file to recover its state before redispatching.
 - The user watches, steers and stops agents from the widget, the fleet list below the editor, and `/agents`.
 
 ## Pre-install dependencies before dispatching
@@ -54,6 +57,11 @@ For an advisory or review pass that should persist nothing, say so: report in th
 An agent's self-report that its own work is done is not evidence.
 When an agent writes or edits files, check the actual changes before reporting the work as done.
 Dispatch a separate `reviewer` with a task-specific angle: acceptance criteria with pass/fail evidence, or a security angle covering injection, authz gaps, secret handling and unsafe input.
+Give it the diff or commit range and the unit's contract, never the worker's report or a summary of it, which anchor the reviewer on the claim it should test.
+When a second model family is configured, run it as a pair: two background `reviewer` calls in the same turn with the identical prompt, one on its default model, one with `model: "<provider>/<model>"` from the other family.
+Merge the two reports, judge each finding once against the blocking bar, and note which model raised it.
+To see over time what the second family adds, append one line per review to a log such as `.agents/research/reviewer-comparison.jsonl`:
+`{"date":"YYYY-MM-DD","repo":"<name>","unit":"<one line>","kind":"code|plan","a_only":N,"b_only":N,"both":N,"acted_on":{"a_only":N,"b_only":N,"both":N}}`
 Load the `code/review` skill first and tell the reviewer in its prompt the full path of `code/review/SKILL.md` in your skills folder, since a child cannot see the parent's loaded skills.
 
 ## Orchestrator mode

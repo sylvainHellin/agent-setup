@@ -1,6 +1,6 @@
 # Authoring documents
 
-Typst, LaTeX and Slidev artifacts: slides, letters, reports, rebuttals, memos.
+Typst, LaTeX and PowerPoint artifacts: slides, letters, reports, rebuttals, memos.
 
 ## Templates
 

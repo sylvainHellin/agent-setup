@@ -49,6 +49,13 @@ Most defects are two locations disagreeing, and only one of them is in the diff.
 The most dangerous omissions are outside the diff entirely.
 A changed signature obliges every caller, a new enum variant obliges every match.
 
+## Bar guard
+
+An agent that writes both the code and its checks can reach green by weakening the checks.
+Scan every diff for skipped or deleted tests, removed or loosened assertions, new suppressions (`noqa`, `type: ignore`, `ts-ignore`, `eslint-disable`, `pragma: no cover`), lowered thresholds or coverage gates, stubs, `TODO`, `NotImplementedError` and empty `except` blocks.
+Report each hit with its file and line, outside the three gates above, because the hit is itself the evidence.
+A hit that skips, deletes or loosens a test, assertion, threshold or gate, or adds a suppression, weakens a check; a `TODO` or stub is reported as non-blocking.
+
 ## Falsification pass
 
 Do not let the agent that found an issue be the only one to judge it.
@@ -74,9 +81,11 @@ Blocking only when the finding concretely demonstrates one of these:
 it breaks the build, tests or type-checking; it opens a security hole reachable
 from a real code path; it loses or corrupts data; it breaks a public
 API/CLI/schema contract real callers depend on with no migration; it regresses
-behaviour that worked before the change.
+behaviour that worked before the change; it weakens a check (bar guard) with
+no reason stated in the change; it fixes a bug or adds behaviour without a
+test that fails without the change (the `code` skill's tests-first rule).
 
-Never blocking: style, naming, refactors, missing tests, defensive programming
+Never blocking: style, naming, refactors, missing tests beyond that rule, defensive programming
 with no demonstrated reachable path, performance suggestions that preserve
 correctness, documentation, architectural critique with no named production
 impact, and anything whose reachability the finding itself cannot show.
@@ -90,6 +99,10 @@ passes do not converge on the same finding.
 Derive the angles from the actual change rather than a standing list.
 Correctness and regressions, tests and validation, and simplicity are the usual
 three; add security, performance or contract angles when the change calls for it.
+Angles and models are separate axes: when reviews run as a pair of model
+families, each angle runs on both with the same prompt
+(`agents/subagents/SKILL.md`, "Check with fresh eyes"), so the two models
+compare like for like; one prompt covering every angle is the usual case.
 
 The `reviewer` agent reads this file on its own; any other agent doing a review
 needs its path in the prompt, since a child cannot see the parent's loaded skills.

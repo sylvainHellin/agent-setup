@@ -1,0 +1,14 @@
+{
+  "name": "pi-extension-agent-pages-inbox",
+  "private": true,
+  "type": "module",
+  "description": "Holds one SSE connection to the agent-pages server per session and queues a page's comment export as a follow-up when Send to agent targets this session.",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec tests/*.test.ts"
+  }
+}

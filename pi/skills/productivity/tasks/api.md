@@ -1,7 +1,7 @@
 # Plane CE: what the `plane` CLI does not cover
 
 The binary owns issue reads and writes, labels and attachments, module and state lookups, pagination, identifier resolution, and the markdown-to-`description_html` conversion.
-This file is the fallback for the operations it has no command for: creating a label, reading comments back, deletion, and project and module creation.
+This file is the fallback for the operations it has no command for: creating a label, deletion, and project and module creation.
 The endpoint facts the binary already encodes are in its README (https://github.com/sylvainHellin/plane-cli), not repeated here.
 
 ## Shape of a raw call
@@ -22,7 +22,6 @@ If the instance sits behind a certificate your system trusts but Python's bundle
 | Purpose | Call |
 |---|---|
 | Create a label | `POST /workspaces/<ws>/projects/<proj>/labels/` with `{"name": ..., "color": "#rrggbb"}` |
-| Read comments back | `GET /workspaces/<ws>/projects/<proj>/issues/<issue>/comments/` |
 | List who can be assigned | `GET /workspaces/<ws>/projects/<proj>/members/` (a bare array of user objects; assignability is project membership, not workspace membership) |
 | Add a workspace member to a project | `POST /workspaces/<ws>/projects/<proj>/members/` with `{"member": "<user_id>", "role": 15}` (`role` 20 admin, 15 member, 5 guest; `<user_id>` from `GET /workspaces/<ws>/members/`) |
 | Delete an issue | `DELETE /workspaces/<ws>/projects/<proj>/issues/<issue>/` (403 for a plain project member; 204 for an admin, and only on the user's explicit request) |

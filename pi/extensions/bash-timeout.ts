@@ -10,14 +10,24 @@
  * (large test suites, transfers, model runs) stay possible.
  */
 
-import { createBashToolDefinition, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+	createBashToolDefinition,
+	DEFAULT_MAX_BYTES,
+	DEFAULT_MAX_LINES,
+	type ExtensionAPI,
+	formatSize,
+} from "@earendil-works/pi-coding-agent";
 
 const DEFAULT_TIMEOUT_SECONDS = 300;
 
-const TIMEOUT_NOTE =
-	` Commands run with a default timeout of ${DEFAULT_TIMEOUT_SECONDS} seconds: on expiry the process tree is killed,` +
-	` the output produced so far is returned, and the result says the command timed out.` +
-	` Pass a larger timeout for commands that legitimately need longer.`;
+// Our own full text instead of the built-in's plus a note: shorter, and it
+// states the default timeout the built-in does not have. The limits come from
+// pi's exported constants, so a change there still reaches the description.
+const DESCRIPTION =
+	`Run a bash command in the working directory; returns stdout and stderr.` +
+	` Output past ${DEFAULT_MAX_LINES} lines or ${formatSize(DEFAULT_MAX_BYTES)} keeps the tail and saves the full text to a temp file.` +
+	` Default timeout ${DEFAULT_TIMEOUT_SECONDS} s, after which the process tree is killed and the partial output returned;` +
+	` pass a larger \`timeout\` for long jobs.`;
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
@@ -37,7 +47,7 @@ export default function (pi: ExtensionAPI) {
 
 		pi.registerTool({
 			...base,
-			description: `${base.description}${TIMEOUT_NOTE}`,
+			description: DESCRIPTION,
 			parameters,
 			execute(toolCallId, params, signal, onUpdate, toolCtx) {
 				return base.execute(

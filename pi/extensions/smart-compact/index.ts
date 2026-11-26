@@ -67,6 +67,14 @@
  *      the runtime error channel, never reaches this extension, and the agent
  *      is left idle with no continuation. Deferring past the emit lets the send
  *      land once compaction has settled.
+ *  21. Beside the prune extension's automatic prune (prune/src/auto.ts, plan
+ *      2026-11-21), the boundary advisory and its rungs are held back for a
+ *      session the prune extension announced on `pi.events`: the harness
+ *      prunes at a seam above 120k instead, and the model gets the prune
+ *      notice. When an automatic prune leaves more than 60k, or finds nothing
+ *      worth cutting, one fallback advisory asks for a handoff and
+ *      `smart_compact`, and today's ladder runs again without prune
+ *      recommendations until the next compaction.
  */
 
 import type {
@@ -79,6 +87,7 @@ import type {
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { AUTO_PRUNE_EVENT, AUTO_PRUNE_FALLBACK_TOKENS, type AutoPruneEvent } from "../prune/src/auto-config.ts";
 import { estimatePrunedTokens } from "../prune/src/estimate.ts";
 
 import { createSmartBoundaryConfig, type SmartBoundaryConfigStore } from "./src/config.js";
@@ -92,6 +101,7 @@ import {
 import { calculateEscalationBand, clampEscalationSchedule, isHigherEscalationBand } from "./src/escalation.js";
 import { writeHandoffFile } from "./src/handoff-file.js";
 import {
+  buildAutoPruneFallbackPrompt,
   buildEscalationPrompt,
   buildManualSmartCompactRequestPrompt,
   buildPostCompactionContinuationPrompt,
@@ -131,8 +141,15 @@ export default function smartCompactExtension(pi: ExtensionAPI) {
   const config = createSmartBoundaryConfig();
   const runtimeState = createSmartCompactRuntimeState();
 
-  pi.on("session_start", () => {
+  pi.on("session_start", (_event, ctx) => {
     resetEscalationState(runtimeState);
+    runtimeState.currentSessionId = sessionIdOf(ctx);
+  });
+
+  // Change 21: the prune extension announces its automatic prune and reports
+  // each outcome on the bus; delivery is synchronous, from its turn_end.
+  pi.events?.on?.(AUTO_PRUNE_EVENT, (data: unknown) => {
+    handleAutoPruneEvent(pi, data as AutoPruneEvent, runtimeState);
   });
 
   // Branch navigation (rewind, tree jump) emits session_before_tree /
@@ -145,6 +162,7 @@ export default function smartCompactExtension(pi: ExtensionAPI) {
   });
 
   pi.on("turn_end", async (_event, ctx) => {
+    runtimeState.currentSessionId = sessionIdOf(ctx) ?? runtimeState.currentSessionId;
     await monitorContextUsage(pi, ctx, config, runtimeState);
   });
 
@@ -158,6 +176,76 @@ export default function smartCompactExtension(pi: ExtensionAPI) {
   registerSmartCompactTool(pi, runtimeState);
   registerSmartCompactionHooks(pi, runtimeState);
   registerSmartBoundaryCommand(pi, config, runtimeState);
+}
+
+function sessionIdOf(ctx: ExtensionContext | undefined): string | undefined {
+  try {
+    return ctx?.sessionManager?.getSessionId?.() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Whether the prune extension prunes this session on its own (change 21). */
+function isAutoPruneSession(runtimeState: SmartCompactRuntimeState, ctx: ExtensionContext): boolean {
+  const id = sessionIdOf(ctx);
+  return id !== undefined && runtimeState.autoPruneSessions.has(id);
+}
+
+/**
+ * Change 21: record the announcement, and send the fallback advisory once
+ * when an automatic prune of this session left more than
+ * AUTO_PRUNE_FALLBACK_TOKENS or found nothing worth cutting. Outcomes of
+ * other sessions (subagents sharing the bus) are ignored.
+ */
+function handleAutoPruneEvent(pi: ExtensionAPI, event: AutoPruneEvent, runtimeState: SmartCompactRuntimeState): void {
+  if (!event || typeof event.sessionId !== "string") {
+    return;
+  }
+
+  if (event.type === "active") {
+    runtimeState.autoPruneSessions.add(event.sessionId);
+    return;
+  }
+
+  if (event.sessionId !== runtimeState.currentSessionId) {
+    return;
+  }
+
+  const leftTooMuch = event.type === "pruned" && event.tokensEstimate > AUTO_PRUNE_FALLBACK_TOKENS;
+  if (!(leftTooMuch || event.type === "no-gain")) {
+    return;
+  }
+
+  if (runtimeState.autoPruneFallback || getPendingSmartCompaction(runtimeState)) {
+    return;
+  }
+
+  runtimeState.autoPruneFallback = true;
+  // The fallback stands in for the rung the context sits on, so the ladder
+  // resumes above it instead of repeating the same request as band 0.
+  const fallbackBand =
+    runtimeState.activeBoundaryTokens === undefined
+      ? 0
+      : calculateEscalationBand({
+          tokens: event.tokensBefore,
+          boundaryTokens: runtimeState.activeBoundaryTokens,
+          intervalTokens: runtimeState.activeIntervalTokens,
+        }) ?? 0;
+  if (fallbackBand > runtimeState.highestEscalationBandSent) {
+    markEscalationBandSent(runtimeState, fallbackBand);
+  }
+  const message = buildAutoPruneFallbackPrompt({
+    tokensBefore: event.tokensBefore,
+    tokensAfter: event.type === "pruned" ? event.tokensEstimate : undefined,
+  });
+  try {
+    void Promise.resolve(pi.sendUserMessage(message, { deliverAs: "steer" })).catch(() => {
+      runtimeState.autoPruneFallback = false;
+    });
+  } catch {
+    runtimeState.autoPruneFallback = false;
+  }
 }
 
 function registerSmartBoundaryCommand(
@@ -664,11 +752,16 @@ async function monitorContextUsage(
     runtimeState.highestEscalationBandSent = -1;
     return;
   }
+  // Change 21: the automatic prune replaces the advisory until it stops paying.
+  const autoPrune = isAutoPruneSession(runtimeState, ctx);
+  if (autoPrune && !runtimeState.autoPruneFallback) {
+    return;
+  }
   if (!isHigherEscalationBand(band, runtimeState.highestEscalationBandSent)) {
     return;
   }
 
-  const prunedTokens = estimatePrunedContext(ctx);
+  const prunedTokens = autoPrune ? undefined : estimatePrunedContext(ctx);
   const message = buildEscalationPrompt({
     tokens,
     boundaryTokens: schedule.boundaryTokens,

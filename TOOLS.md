@@ -21,7 +21,6 @@ The skills in `pi/skills/` name the ones they call.
 
 Not public yet:
 
-- meetcap: two-track meeting recorder for macOS (the local microphone and the other participants as separate files).
 - typst2pptx: compiles a Typst deck into a PDF and a PowerPoint file with per-slide speaker notes.
 
 ## Harness and terminal
@@ -31,7 +30,8 @@ Not public yet:
 | [pi](https://github.com/earendil-works/pi-coding-agent) | The coding agent harness everything here plugs into: extensions, skills, prompts, subagent definitions. |
 | [@tintinweb/pi-subagents](https://www.npmjs.com/package/@tintinweb/pi-subagents) | pi package that adds the `Agent` tool and runs the subagents defined in `pi/agents/`. |
 | [pi-vim](https://github.com/lajarre/pi-vim) | pi package that gives the prompt editor a vim mode. |
-| [herdr](https://github.com/ogulcancelik/herdr) | Terminal multiplexer built for agents; long-running jobs run in its tabs, and it shows each pane's agent state. |
+| [Herdr](https://herdr.dev) | Desktop app for terminals and coding agents; pi reports its working, blocked and done state to it, and its phone app follows the same sessions. |
+| [herdr-core](https://herdr.dev/core/) | `hc`, the terminal runtime under the Herdr app: long-running jobs run in its terminals, which stay alive when the window or the session closes. |
 | [Neovim](https://neovim.io) | Editor for code, notes, drafts and plan review. |
 | [Ghostty](https://ghostty.org) | Terminal emulator. |
 
@@ -54,12 +54,13 @@ Not public yet:
 | yt-dlp | YouTube transcripts and video downloads (`web` skill). |
 | Rust (`rustup`) | Builds the Rust CLIs above with `cargo install --path .`. |
 | stow | Symlinks a dotfiles repo into place; useful when this config lives in one. |
+| [Worktrunk](https://worktrunk.dev) (`wt`) | Git worktrees for parallel agent work: one branch per worktree, created, listed and merged back with one command each (`code` skill). |
 | lazygit | Terminal UI for git. |
 | yazi | Terminal file manager. |
 | zoxide | Jumps to frequently used directories. |
-| [qmd](https://github.com/tobi/qmd) | Local hybrid (keyword and semantic) search over Markdown notes and session transcripts; the `knowledge` skill escalates to it when `rg` finds nothing. |
+| [qmd](https://github.com/tobi/qmd) | Local hybrid (keyword and semantic) search over Markdown notes; the `knowledge` skill escalates to it when `rg` finds nothing. |
 | [crawl4ai](https://github.com/unclecode/crawl4ai) | Local crawler (`crwl`) that turns pages into Markdown without API keys; not called by the skills. |
-| [BrowserOS](https://github.com/browseros-ai/BrowserOS) | Agent-driven browser for clicks, forms and sign-ins (`web` skill). |
+| [BrowserOS](https://github.com/browseros-ai/BrowserOS) | Agent-driven browser for clicks, forms and sign-ins (`web` skill); sessions share it, so each closes the tabs it opened. |
 | [Superwhisper](https://superwhisper.com) | Dictation and transcription on macOS. |
 | [Obsidian](https://obsidian.md) | The notes vault the `knowledge` skill reads and writes. |
 | [Zotero](https://www.zotero.org) with [Better BibTeX](https://retorque.re/zotero-better-bibtex/) | Reference library and citation keys, reached through `zot`. |
@@ -68,7 +69,9 @@ Not public yet:
 ## Install on macOS
 
 ```sh
-brew install ripgrep fd uv pnpm gh jq typst tectonic pandoc poppler imagemagick ffmpeg stow lazygit yazi zoxide neovim rustup herdr pi-coding-agent
+brew install ripgrep fd uv pnpm gh jq typst tectonic pandoc poppler imagemagick ffmpeg stow worktrunk lazygit yazi zoxide neovim rustup pi-coding-agent
+wt config shell install
+curl -fsSL https://releases.herdr.dev/core/install.sh | sh
 brew install --cask ghostty obsidian zotero browseros superwhisper
 uv tool install --upgrade "yt-dlp[default,curl-cffi]" --with bgutil-ytdlp-pot-provider
 uv tool install crawl4ai && crawl4ai-setup
@@ -77,6 +80,7 @@ pi install npm:@tintinweb/pi-subagents
 pi install npm:pi-vim
 ```
 
+The Herdr app installs from https://herdr.dev/download/.
 Better BibTeX installs from its release page into Zotero.
 Plane self-hosting follows https://developers.plane.so/self-hosting/overview.
 The tools in "Own tools" install from their repos as each README describes.

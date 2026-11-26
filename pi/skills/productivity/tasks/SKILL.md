@@ -12,11 +12,12 @@ Give the agent its own Plane user and token if you want its writes attributed to
 |---|---|
 | Read one ticket, from an identifier or a pasted link | `plane issue get PROJ-12` |
 | See what is open in an area | `plane issue list PROJ [--state todo] [--module "<module>"] [--label waiting]` |
-| Create work | `plane issue create PROJ "title" [--module M] [--state S] [--priority P] [--start YYYY-MM-DD] [--due YYYY-MM-DD] [--label L] [--desc-md -]` |
+| Check whether a ticket already exists, across all areas (words in any order, a `PROJ-12` reference or a number; exits 1 on none) | `plane issue search "some words" [--body] [--project PROJ] [--state todo]`, `--body` also searches descriptions (seconds, not instant) |
+| Create work | `plane issue create PROJ "title" [--module M] [--state S] [--priority P] [--start YYYY-MM-DD] [--due YYYY-MM-DD] [--label L] [--desc-file /tmp/desc.md]` |
 | Create from a bridged vault note | `plane issue create --from-note <note.md> "title"` |
-| Change anything, closing included | `plane issue update PROJ-12 --state done`, `plane issue update PROJ-12 --label waiting`, `plane issue update PROJ-12 --desc-md - < /tmp/desc.md` |
+| Change anything, closing included | `plane issue update PROJ-12 --state done`, `plane issue update PROJ-12 --label waiting`, `plane issue update PROJ-12 --desc-file /tmp/desc.md` |
 | Assign or hand off a ticket | `plane issue update PROJ-12 --assignee <first name>` (or `--assignee none` to clear) |
-| Leave a note on a ticket | `plane issue comment PROJ-12 "text"` |
+| Leave a note on a ticket, or read the notes back | `plane issue comment PROJ-12 "text"`, a long one from a file with `plane issue comment PROJ-12 --file /tmp/comment.md`, `plane issue comments PROJ-12` |
 | Put files on a ticket, or see what is there | `plane issue attach PROJ-12 <file> [<file> ...]`, `plane issue attachments PROJ-12` |
 | Read the live structure | `plane project list`, `plane module list PROJ`, `plane state list PROJ`, `plane label list PROJ` |
 
@@ -29,8 +30,8 @@ A pasted `<web base>/<workspace>/browse/<IDENT>-<n>/` link is a ticket: parse th
 ## Footguns
 
 - `--label` and `--assignee` replace the whole set, so pass every value in one call: `--label waiting --label bug`.
-  Removing every label is not expressible; `--assignee none` clears the assignees.
-- `--desc-md` takes text or `-` for stdin, never a path: a path is stored verbatim and the write still reports success, so use `--desc-md - < /tmp/desc.md`.
+  A single `--label none` clears the labels, and `--assignee none` the assignees.
+- `--desc-md` takes markdown text or `-` for stdin, and a file goes through `--desc-file /tmp/desc.md`; `--desc-md` refuses a lone path rather than storing it.
   Write that file with the write tool, not a heredoc, so a description mentioning a destructive command does not trip a command guard.
 - Post-process with `jq`, not an inline `python3 -c`.
 

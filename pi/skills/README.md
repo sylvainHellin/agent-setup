@@ -7,11 +7,11 @@ Adapt the placeholders in angle brackets (`<your vault>`, `<workspace-slug>`) be
 | Skill | Loads when | What it does |
 |---|---|---|
 | `agents` | Editing AGENTS.md, a skill, an extension, a prompt or a setting; delegating to subagents | Authoring rules for instruction files and skills, the context budget, and how to dispatch the `scout`, `researcher`, `worker` and `reviewer` subagents. |
-| `code` | Writing or changing code, reviewing a diff, triaging reviewer findings | Python through `uv`, JavaScript through `pnpm`, and a review bar with admission gates and a separate blocking bar. |
+| `code` | Writing or changing code, parallel branches in git worktrees, reviewing a diff, triaging reviewer findings | Python through `uv`, JavaScript through `pnpm`, tests before the fix, Worktrunk (`wt`) worktrees, and a review bar with admission gates, a bar guard against weakened checks and a separate blocking bar. |
 | `writing` | Drafting or reviewing any text a person reads | A checklist of AI tells with mechanical `rg` checks, the shape of a closing chat reply, and German copy rules. |
 | `documents` | Authoring Typst or LaTeX documents and slides, drawing figures, parsing PDFs and Office files | Template and slide conventions, tex-fig figures and TUM chart colours, the `doc` CLI, and a pointer to the `agent-pages` skill for HTML report pages. |
 | `knowledge` | Any read or write in an Obsidian vault; papers, citations and Zotero | Vault search with `rg`, `fd` and `qmd`, capture discipline for notes, and the `zot` CLI for a Zotero library. |
-| `web` | Any web fetch, search, sourced answer, crawl or YouTube video; operating a website | The `web` CLI with its provider chain, YouTube transcripts with `yt-dlp`, and browser automation notes. |
+| `web` | Any web fetch, search, sourced answer, crawl or YouTube video; operating a website | The `web` CLI with its provider chain, YouTube transcripts with `yt-dlp`, and browser automation through BrowserOS or Playwright over CDP. |
 | `productivity` | Todos, tasks, Plane issues | The `plane` CLI for a self-hosted Plane instance, with conventions for states, dates and labels. |
 
 Two more skills live in the [agent-pages](https://github.com/sylvainHellin/agent-pages) repo, next to the page template they use:

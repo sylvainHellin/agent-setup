@@ -49,6 +49,8 @@ The matching upper-snake-case environment variables (`EXA_API_KEY`, `FIRECRAWL_A
 
 ## When something is missing
 
+A page or file that `web fetch` cannot get (a PDF the site refuses to a script, a calculator that needs a live session) is retried in the agent browser (`browser.md`, `page.download` for files) before the failure is reported.
+
 If `web` is absent or a command fails in a way you cannot resolve, stop and tell the user what you ran and the exact error rather than rebuilding the binary or quietly dropping to raw `curl`.
 For a missing key or a missing binary, `FALLBACK.md` covers the key-free floor and the one sanctioned emergency `curl` path.
 

@@ -17,6 +17,7 @@ Each of these is mechanical and avoidable.
 - Announcing a distinction instead of stating it. Wrong: `A and B answer two different questions. A returns addresses; B returns messages.` Right: `A returns addresses; B returns messages.` The first sentence tells the reader a difference is coming instead of being the difference; same tell as the meta-comment above, outside a parenthetical. A colon-fronted framing clause is the dressed-up version of it: `One point we could not ignore while reading: the papers were AI-generated` -> `The papers were AI-generated`. Length does not make it a different tell.
 - Empty negated foil. Wrong: `separate tracks, so attribution is structural, not guessed`. Right: `separate tracks make attribution structural`. Delete a foil that only restates the positive as a negation. Keep one that names a concrete alternative the reader would otherwise assume: `the current state of the art, instead of listing the whole history of the topic` earns its place, because students really do write the history. Never contort a sentence into two to dodge this rule.
 - Defining by negation. Wrong: `It is not an ontology for extraction`, or a list of what a paper does not claim. Right: state what the thing is and what it claims; limits go in the limitations section, not in the purpose or positioning.
+- Personified artifact. Wrong: `The page says so.`, `the report argues`, `the email asks`. Right: name the person who wrote it, or state the fact with its source: `I marked the figure as unverified on the page`. A page, file or document does not say, argue or decide anything.
 - Marketing staccato. Wrong: `Faster. Cleaner. Done.` or a closing punchline like `Nothing else.`. Right: plain sentences in the register of the artifact.
 - Verbless fronted opening. Wrong: `Venue is the main auditorium. Planned are 25 minutes. Requested is an overview.` Right: `The event takes place in the main auditorium. The slot lasts 25 minutes.` The nominal lead drops the agent and turns prose telegraphic; two in a row already reads as machine.
 - Fact packing. Wrong: one sentence carrying the venue, the slot length and the audience profile through a colon and an appositive tail. Right: one fact per sentence, and cut the facts the reader can infer.
@@ -33,9 +34,10 @@ Sections, in this order, only the ones that carry content: `## Answer`, `## Comm
 Tests run, files deleted and paths touched belong inside the implementation summary, not in sections of their own.
 More than two questions, a figure, a table or a concept to explain go into an HTML report page instead (`documents` skill), and the reply names its path.
 Questions asked in such a page live only there; the chat reply says how many wait in the page instead of repeating them.
+A time or cost estimate in a recommendation counts what the agent can do and states only the share the user still has to do themselves.
 One line per item, and one sentence per line: semantic line breaks apply to chat replies too, not only to `.md` files.
 State the conclusion and the path; drop the reasoning, the verification narrative, and anything the commit message already carries.
-Text the user will copy out (a message, an email body, a snippet) goes in a plain fenced code block, never in `> ` blockquotes, which do not copy cleanly from a terminal.
+Text the user will copy out (a message, an email body, a form answer, a snippet) goes in a plain fenced code block, never in `> ` blockquotes, which do not copy cleanly from a terminal; this holds in a chat reply and in a `.md` file alike.
 
 Wrong:
 
@@ -49,6 +51,10 @@ Right:
 The wrong version fails twice: one convoluted sentence carrying three facts at once, and a closing flourish (`nothing to commit there, ever`) that carries none.
 Same tell, other form: narrating your own diligence (`I verified why rather than assuming`).
 Delete the narration and keep the finding, and keep the finding only when the user needs it.
+
+## Reviewing a draft the user wrote
+
+Judge it against the purpose the user states for it, not against the framework or note it was built from.
 
 ## Review with fresh eyes after editing
 
@@ -69,7 +75,7 @@ Using `rg`:
 | No `**Label:**` in prose | `rg -n '\*\*[^*]+:\*\*' <file>` |
 | No emoji | `rg -n '[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2190}-\x{21FF}\x{2B00}-\x{2BFF}]' <file>` |
 | Meta-comment parenthetical | `rg -n '\((headline|title|subtitle|caption|placeholder|draft|note|TODO)\)' <file>` |
-| Contrast-scaffold aid (read the hit; many `, not ` are legitimate) | `rg -n ', not ' <file>` |
+| Contrast-scaffold aid (read the hit; many `, not ` and `, never ` are legitimate) | `rg -n ', (not\|never) ' <file>` |
 | Slop vocabulary (read the hit; some fit in context) | `rg -ni '\b(delve\|leverage\|utilize\|showcase\|underscore\|pivotal\|testament\|garner\|foster(ing)?\|intricate\|robust\|boasts\|serves as\|stands as)\b' <file>` |
 
 #### Judgment checks
@@ -78,13 +84,14 @@ Read the text and use your own judgment.
 
 - Register matches the artifact: formal academic for co-author-facing prose, plain third person for notes and reports. German reader-facing text stays impersonal (no "Du"), with no Denglisch or calques (`german-copy.md`).
 - Not first person as the user unless they commissioned a draft in their name (an email or letter they send); notes, reports, and summaries stay neutral third person.
+  READMEs and repo docs take the same neutral voice, with no "I", "my", "you" or "your": `Built by me` -> `Own tools`, `Link the parts you want` -> `The parts to use are linked`.
 - Purpose before mechanics: state what a thing is for before how to use it.
 - An asset carries only what must persist; anything the presenter says out loud is not on the slide or board.
 - Reader-facing elements (titles, subtitles, captions, headers) carry no presenter-thinking or direct audience address; that voice belongs in the speaker notes. Wrong as a subtitle: `Where your steer would help most`. Right: drop it or state the topic (`Open decisions`); the addressed-to-you version goes to the speaker notes.
 - Semantic line breaks: one sentence per line, never column-wrapped or split mid-sentence, in `.md` prose, chat replies and email bodies alike.
   A line running well past a full sentence without a break is a smell to inspect.
 - Ends on the last substantive item. A closing offer the reader could make themselves (`Happy to go through this in the next meeting.`) is a flourish; delete it. Holds for emails and notes, not only for chat replies.
-- Concise for the format: longer answers go to a report page rather than long chat replies, and claims carry sources.
+- Concise for the format: a long answer goes to an HTML report page rather than a long chat reply, and claims carry sources.
 - Cut filler and hedging, prefer active voice: `in order to` -> `to`, `due to the fact that` -> `because`, delete `it is important to note that`; name the actor instead of the passive; drop an adverb propping up a weak verb or replace it with the number.
 - Prefer the concrete word over an abstract metaphor noun (`substrate` -> base, `surface` -> the API, `wedge in` -> add), and name the mechanism or a number rather than a feeling: say what a thing does, not how it reads.
 - Cold read: reread every edit as a stranger with no memory of the prior version; delete any sentence that only reacts to how it was previously worded.
